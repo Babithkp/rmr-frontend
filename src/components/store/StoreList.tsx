@@ -41,7 +41,7 @@ export default function StoreList() {
   const [isloading, setIsloading] = useState(false);
   const [stores, setStores] = useState<StoreInputs[]>([]);
   const [selectedStore, setSelectedStore] = useState<StoreInputs>();
-  const [dataToEditDetails, setDataToEditDetails] = useState<StoreInputs>();
+  // const [dataToEditDetails, setDataToEditDetails] = useState<StoreInputs>();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -267,7 +267,7 @@ export default function StoreList() {
                     onClick={() => [
                       setFormStatus("editing"),
                       setIsStoreDetailsModalOpen(false),
-                      setDataToEditDetails(selectedStore!),
+                      // setDataToEditDetails(selectedStore!),
                       setIsCreateModalOpen(true),
                     ]}
                   >
