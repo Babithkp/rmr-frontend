@@ -1,6 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";import { useNavigate } from "react-router";
+import { Button } from "./ui/button";
 export default function Navbar() {
   const [storeName, setStoreName] = useState("");
+  const router = useNavigate();
+
+  const logoutHandler = () => {
+    localStorage.clear();
+    router("/");
+  };
 
   useEffect(() => {
     const admin = localStorage.getItem("isAdmin");
@@ -31,9 +38,11 @@ export default function Navbar() {
             Inventory
           </a>
         )}
-        {storeName !== "Admin" && <a href="/stock" className="font-medium hover:underline">
-          Stocks
-        </a>}
+        {storeName !== "Admin" && (
+          <a href="/stock" className="font-medium hover:underline">
+            Stocks
+          </a>
+        )}
         <a href="/order" className="font-medium hover:underline">
           Order Book
         </a>
@@ -43,9 +52,12 @@ export default function Navbar() {
         <a href="/receipt" className="font-medium hover:underline">
           Receipts
         </a>
-        <a href="/" className="bg-primary p-2 text-white px-3 rounded-md">
+        <Button
+          className="bg-primary p-2 text-white px-3 rounded-md"
+          onClick={logoutHandler}
+        >
           Log Out
-        </a>
+        </Button>
       </nav>
       <p className="w-30 font-medium"></p>
     </header>

@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import Navbar from "../Navbar";
+import { useEffect, useState } from "react";import Navbar from "../Navbar";
 import {
   Dialog,
   DialogContent,
@@ -58,6 +57,7 @@ type Store = {
 };
 
 export default function Orders() {
+  const [isAdmin, setIsAdmin] = useState(false);
   const [storeId, setStoreId] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [formStatus, setFormStatus] = useState("New");
@@ -144,12 +144,17 @@ export default function Orders() {
 
   useEffect(() => {
     getAllItems();
-    const store = localStorage.getItem("store");
-    if (store) {
-      setStoreId(JSON.parse(store).id);
-      getOrdersForStore(JSON.parse(store).id);
-    } else {
+    const isadmin = localStorage.getItem("isAdmin");
+    if (isadmin === "true") {
+      setIsAdmin(true);
       getAllOrders();
+    } else {
+      const store = localStorage.getItem("store");
+      if (store) {
+        setStoreId(JSON.parse(store).id);
+        getOrdersForStore(JSON.parse(store).id);
+        setIsAdmin(false);
+      }
     }
   }, []);
 
@@ -159,7 +164,7 @@ export default function Orders() {
       <div className="w-full p-2 px-5 border rounded-2xl">
         <div className="flex justify-between items-center ">
           <p className="text-lg font-medium">Order Book</p>
-          {storeId === "" && (
+          {!isAdmin && (
             <Dialog
               open={isCreateModalOpen}
               onOpenChange={setIsCreateModalOpen}
@@ -289,7 +294,7 @@ export default function Orders() {
           <thead>
             <tr className="text-[#797979]">
               <th className="text-start font-medium py-2">Order Date</th>
-              {storeId !== "" && (
+              {isAdmin && (
                 <th className="text-start font-medium">Store Name</th>
               )}
               <th className="text-start font-medium">Items</th>
@@ -301,7 +306,7 @@ export default function Orders() {
                 <td className="text-start font-medium py-2 border px-2 ">
                   {new Date(order.createdAt).toLocaleDateString()}
                 </td>
-                {storeId !== "" && (
+                {isAdmin && (
                   <td className="text-start font-medium border px-2">
                     {order.store.storeName}
                   </td>
