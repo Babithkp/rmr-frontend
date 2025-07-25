@@ -93,13 +93,26 @@ export default function OrderForm() {
 
   const handleQuantityChange = (id: string, value: string) => {
     const parsed = parseInt(value, 10);
-
-    // Optional: guard against non-number or negative
+  
+    // Guard against invalid input
     if (isNaN(parsed) || parsed < 0) return;
-
-    const updatedItems = ordeItems.map((orderItem) =>
-      orderItem.item.id === id ? { ...orderItem, quantity: parsed } : orderItem,
-    );
+  
+    const updatedItems = ordeItems.map((orderItem) => {
+      if (orderItem.item.id === id) {
+        const gst = parseFloat(orderItem.item.GST);
+        const unitPriceWithGst =
+          orderItem.item.price + (orderItem.item.price * gst) / 100;
+        const totalPrice = parsed * unitPriceWithGst;
+  
+        return {
+          ...orderItem,
+          quantity: parsed,
+          price: totalPrice,
+        };
+      }
+      return orderItem;
+    });
+  
     setOrdereItems(updatedItems);
   };
 

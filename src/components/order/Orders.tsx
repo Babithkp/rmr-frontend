@@ -96,6 +96,8 @@ export default function Orders() {
 
   const filterOrders = async () => {
     if (fromDate && toDate) {
+      console.log(fromDate, toDate);
+      
       setIsLoading(true);
       const response = await getOrdersByFromToDateApi(fromDate, toDate);
       if (response?.status === 200) {
@@ -293,23 +295,51 @@ export default function Orders() {
                   id="date"
                   className="w-[29%] justify-between font-normal"
                 >
-                  {fromDate ? fromDate.toLocaleDateString() : "From Date"}
+                  {fromDate
+                    ? fromDate.toLocaleString() // shows date + time
+                    : "From Date & Time"}
                   <ChevronDownIcon />
                 </Button>
               </PopoverTrigger>
+
               <PopoverContent
-                className="w-auto overflow-hidden p-0"
+                className="w-auto space-y-2 overflow-hidden p-4"
                 align="start"
               >
+                {/* Calendar Picker */}
                 <Calendar
                   mode="single"
                   selected={fromDate}
                   captionLayout="dropdown"
                   onSelect={(date) => {
-                    setFromDate(date);
-                    setOpenFromDate(false);
+                    if (date) {
+                      const updatedDate = new Date(fromDate || new Date());
+                      updatedDate.setFullYear(date.getFullYear());
+                      updatedDate.setMonth(date.getMonth());
+                      updatedDate.setDate(date.getDate());
+                      setFromDate(updatedDate);
+                    }
                   }}
                 />
+
+                {/* Time Picker */}
+                <div className="flex items-center gap-2">
+                  <label className="text-sm">Time:</label>
+                  <input
+                    type="time"
+                    value={fromDate ? fromDate.toTimeString().slice(0, 5) : ""}
+                    onChange={(e) => {
+                      const [hours, minutes] = e.target.value
+                        .split(":")
+                        .map(Number);
+                      const updatedDate = new Date(fromDate || new Date());
+                      updatedDate.setHours(hours);
+                      updatedDate.setMinutes(minutes);
+                      setFromDate(updatedDate);
+                    }}
+                    className="rounded border px-2 py-1 text-sm"
+                  />
+                </div>
               </PopoverContent>
             </Popover>
             <Popover open={openToDate} onOpenChange={setOpenToDate}>
@@ -319,25 +349,52 @@ export default function Orders() {
                   id="date"
                   className="w-[30%] justify-between font-normal"
                 >
-                  {toDate ? toDate.toLocaleDateString() : "To Date"}
+                  {toDate ? toDate.toLocaleString() : "To Date & Time"}
                   <ChevronDownIcon />
                 </Button>
               </PopoverTrigger>
+
               <PopoverContent
-                className="w-auto overflow-hidden p-0"
+                className="w-auto space-y-2 overflow-hidden p-4"
                 align="start"
               >
+                {/* Date Picker */}
                 <Calendar
                   mode="single"
                   selected={toDate}
                   captionLayout="dropdown"
                   onSelect={(date) => {
-                    setToDate(date);
-                    setOpenToDate(false);
+                    if (date) {
+                      const updatedDate = new Date(toDate || new Date());
+                      updatedDate.setFullYear(date.getFullYear());
+                      updatedDate.setMonth(date.getMonth());
+                      updatedDate.setDate(date.getDate());
+                      setToDate(updatedDate);
+                    }
                   }}
                 />
+
+                {/* Time Picker */}
+                <div className="flex items-center gap-2">
+                  <label className="text-sm">Time:</label>
+                  <input
+                    type="time"
+                    value={toDate ? toDate.toTimeString().slice(0, 5) : ""}
+                    onChange={(e) => {
+                      const [hours, minutes] = e.target.value
+                        .split(":")
+                        .map(Number);
+                      const updatedDate = new Date(toDate || new Date());
+                      updatedDate.setHours(hours);
+                      updatedDate.setMinutes(minutes);
+                      setToDate(updatedDate);
+                    }}
+                    className="rounded border px-2 py-1 text-sm"
+                  />
+                </div>
               </PopoverContent>
             </Popover>
+
             <Button
               className="border-primary w-[20%] cursor-pointer"
               variant={"outline"}

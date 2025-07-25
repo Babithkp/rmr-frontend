@@ -298,6 +298,8 @@ export default function ReceiptPage() {
         const response = await receiptCreateApi(order);
         if (response?.status === 200) {
           toast.success("Receipt created successfully");
+          setTableData([]);
+          setIsCreateModalOpen(false);
         } else {
           toast.error("Something went wrong");
         }
