@@ -1,4 +1,12 @@
-import { useEffect, useState } from "react";import Navbar from "../Navbar";
+import { useEffect, useState } from "react";
+import Navbar from "../Navbar";
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
@@ -8,28 +16,39 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { LoaderCircle, Plus, Trash } from "lucide-react";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+import {
+  ChevronDownIcon,
+  LoaderCircle,
+  Pencil,
+  Plus,
+  Trash,
+} from "lucide-react";
 import { Button } from "../ui/button";
 import { toast } from "react-toastify";
-import type { ItemInputs } from "../item/ItemList";
-import { getAllItemsApi } from "@/api/item";
+
 import {
-  createOrderApi,
+  deleteOrderApi,
   getAllOrdersApi,
+  getOrdersByFromToDateApi,
   getOrdersByStoreIdApi,
 } from "@/api/order";
+import { useNavigate } from "react-router";
 
-interface Item {
-  name: string;
-  itemId: string;
-  quantity: number;
-}
+import { saveAs } from "file-saver";
+import ExcelJS from "exceljs";
+import { getAllItemsApi } from "@/api/item";
+import type { ItemInputs } from "../item/ItemList";
 
 type OrderResponse = {
   id: string;
@@ -45,10 +64,13 @@ type OrderItem = {
 
 type ItemDetails = {
   id: string;
+  itemId: string;
   name: string;
   imageUrl: string | null;
   category: string;
   unit: string;
+  price: number;
+  GST: number;
 };
 
 type Store = {
@@ -58,76 +80,168 @@ type Store = {
 
 export default function Orders() {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [storeId, setStoreId] = useState("");
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [formStatus, setFormStatus] = useState("New");
-  const [existingItems, setExistingItems] = useState<ItemInputs[]>([]);
-  const [items, setItems] = useState<Item[]>([]);
-  const [loading, setLoading] = useState(false);
+
   const [orders, setOrders] = useState<OrderResponse[]>([]);
-  const [newItem, setNewItem] = useState({
-    itemId: "",
-    name: "",
-    quantity: "",
-  });
+  const [fromDate, setFromDate] = useState<Date | undefined>(undefined);
+  const [openFromDate, setOpenFromDate] = useState(false);
+  const [toDate, setToDate] = useState<Date | undefined>(undefined);
+  const [openToDate, setOpenToDate] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<OrderResponse | null>(
+    null,
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [itemMaster, setItemMaster] = useState<ItemInputs[]>([]);
+  const navigate = useNavigate();
 
-  const onSubmit = async () => {
-    if (items.length == 0) {
-      toast.warn("Please add atleast one item");
-      return;
+  const filterOrders = async () => {
+    if (fromDate && toDate) {
+      setIsLoading(true);
+      const response = await getOrdersByFromToDateApi(fromDate, toDate);
+      if (response?.status === 200) {
+        setOrders(response.data.data);
+      } else {
+        toast.error("Something went wrong");
+      }
     }
-    setLoading(true);
-    const response = await createOrderApi({
-      items: items,
-      storeId: storeId,
+    setIsLoading(false);
+  };
+
+  const exportOrderSummaryToExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Order Summary");
+
+    // Step 1: Get all unique items and stores
+    const itemSet = new Set<string>();
+    const storeSet = new Set<string>();
+
+    orders.forEach((order) => {
+      storeSet.add(order.store.storeName);
+      order.Items.forEach((item) => itemSet.add(item.Items.name));
     });
-    if (response?.status === 200) {
-      toast.success("Order created successfully");
-      setItems([]);
-      setIsCreateModalOpen(false);
-    } else {
-      toast.error("Something went wrong");
-    }
-    setLoading(false);
+
+    const uniqueItems = Array.from(itemSet);
+    const uniqueStores = Array.from(storeSet);
+
+    // Step 2: Write header
+    worksheet.getCell("A1").value = "SKU ID";
+    worksheet.getCell("B1").value = "Item Name";
+
+    uniqueStores.forEach((store, idx) => {
+      worksheet.getCell(1, idx + 3).value = store; // Start from C
+    });
+
+    worksheet.getCell(1, uniqueStores.length + 3).value = "Total"; // Last column header
+
+    // Step 3: Fill rows
+    uniqueItems.forEach((itemName, rowIdx) => {
+      const row = worksheet.getRow(rowIdx + 2);
+
+      const matchedItem = itemMaster.find((item) => item.name === itemName);
+      const skuId = matchedItem?.itemId ?? "UNKNOWN";
+
+      row.getCell(1).value = skuId;
+      row.getCell(2).value = itemName;
+
+      let itemTotal = 0;
+
+      uniqueStores.forEach((storeName, colIdx) => {
+        const quantity = orders
+          .filter((order) => order.store.storeName === storeName)
+          .flatMap((order) => order.Items)
+          .filter((i) => i.Items.name === itemName)
+          .reduce((sum, i) => sum + i.quantity, 0);
+
+        row.getCell(colIdx + 3).value = quantity; // Start from column C
+        itemTotal += quantity;
+      });
+
+      // Final column for item total
+      row.getCell(uniqueStores.length + 3).value = itemTotal;
+    });
+
+    worksheet.getRow(1).font = { bold: true };
+
+    // Step 4: Save as Excel
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    saveAs(blob, "OrderSummary.xlsx");
   };
 
-  const addItemToListHandler = () => {
-    if (newItem.itemId === "" || newItem.quantity === "") {
-      toast.warn("Please select an item");
-      return;
-    }
-    if (items?.find((item) => item.itemId === newItem.itemId)) {
-      toast.warn("Item already exists");
-      return;
-    }
-    const item = {
-      name: newItem.name,
-      itemId: newItem.itemId,
-      quantity: parseFloat(newItem.quantity as string | "0"),
-    };
-    setItems((prev) => [...prev, item]);
+  const editOrderHandler = () => {
+    if (selectedOrder?.createdAt) {
+      const createdAt = new Date(selectedOrder.createdAt);
 
-    setNewItem({ itemId: "", name: "", quantity: "" });
+      const createdDate = new Date(
+        createdAt.getFullYear(),
+        createdAt.getMonth(),
+        createdAt.getDate(),
+      );
+
+      const nextDay = new Date(createdDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+
+      nextDay.setHours(9, 0, 0, 0);
+
+      const now = new Date();
+
+      if (now < nextDay) {
+        navigate(`/order-form/${selectedOrder.id}`);
+      } else {
+        toast.warn("Editing disabled after 9 AM the next day");
+      }
+    }
   };
 
-  const removeItemFromListHandler = (itemId: string) => {
-    setItems((prev) => prev.filter((item) => item.itemId !== itemId));
+  const delteOrderHandler = () => {
+    if (selectedOrder?.createdAt) {
+      const createdAt = new Date(selectedOrder.createdAt);
+
+      const createdDate = new Date(
+        createdAt.getFullYear(),
+        createdAt.getMonth(),
+        createdAt.getDate(),
+      );
+
+      const nextDay = new Date(createdDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+
+      nextDay.setHours(9, 0, 0, 0);
+
+      const now = new Date();
+
+      if (now < nextDay) {
+        onDeleteHandler();
+      } else {
+        toast.warn("Editing disabled after 9 AM the next day");
+      }
+    }
   };
 
-  async function getAllItems() {
-    const response = await getAllItemsApi();
-    if (response?.status === 200) {
-      setExistingItems(response.data.data);
-    } else {
-      toast.error("Something went wrong");
+  const onDeleteHandler = async () => {
+    if (selectedOrder) {
+      const response = await deleteOrderApi(selectedOrder.id);
+      if (response?.status === 200) {
+        toast.success("Order deleted successfully");
+        if (isAdmin) {
+          getAllOrders();
+        } else {
+          getOrdersForStore(selectedOrder.store.id);
+        }
+        setIsOpen(false);
+        setSelectedOrder(null);
+      } else {
+        toast.error("Something went wrong");
+      }
     }
-  }
+  };
 
   async function getAllOrders() {
     const response = await getAllOrdersApi();
     if (response?.status === 200) {
       setOrders(response.data.data);
-      console.log(response.data.data);
     } else {
       toast.error("Something went wrong");
     }
@@ -142,6 +256,15 @@ export default function Orders() {
     }
   }
 
+  async function getAllItems() {
+    const response = await getAllItemsApi();
+    if (response?.status === 200) {
+      setItemMaster(response.data.data);
+    } else {
+      toast.error("Something went wrong");
+    }
+  }
+
   useEffect(() => {
     getAllItems();
     const isadmin = localStorage.getItem("isAdmin");
@@ -151,7 +274,6 @@ export default function Orders() {
     } else {
       const store = localStorage.getItem("store");
       if (store) {
-        setStoreId(JSON.parse(store).id);
         getOrdersForStore(JSON.parse(store).id);
         setIsAdmin(false);
       }
@@ -159,170 +281,212 @@ export default function Orders() {
   }, []);
 
   return (
-    <main className="px-20 flex flex-col gap-5">
+    <main className="flex w-full flex-col gap-5">
       <Navbar />
-      <div className="w-full p-2 px-5 border rounded-2xl">
-        <div className="flex justify-between items-center ">
-          <p className="text-lg font-medium">Order Book</p>
-          {!isAdmin && (
-            <Dialog
-              open={isCreateModalOpen}
-              onOpenChange={setIsCreateModalOpen}
-            >
-              <DialogTrigger
-                className="bg-primary hover:bg-primary flex cursor-pointer items-center gap-2 rounded-2xl p-2 px-4 font-medium text-white"
-                onClick={() => [setFormStatus("New")]}
+      <div className="flex w-full flex-col gap-3 rounded-2xl p-2 px-20">
+        {isAdmin ? (
+          <div className="flex w-full items-center justify-between">
+            <Popover open={openFromDate} onOpenChange={setOpenFromDate}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  id="date"
+                  className="w-[29%] justify-between font-normal"
+                >
+                  {fromDate ? fromDate.toLocaleDateString() : "From Date"}
+                  <ChevronDownIcon />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-auto overflow-hidden p-0"
+                align="start"
               >
-                <Plus color="white" size={20} />
-                Create new
-              </DialogTrigger>
-              <DialogContent className="min-w-5xl">
-                <DialogHeader>
-                  <DialogTitle>
-                    {formStatus == "New" ? "Create Receipt" : "Edit Receipt"}
-                  </DialogTitle>
-                </DialogHeader>
-                <DialogDescription></DialogDescription>
-                <div className="flex flex-col gap-5">
-                  <div className="w-full flex flex-col gap-2">
-                    <label>Select Item</label>
-                    <div className="flex items-center gap-5">
-                      <Select
-                        value={newItem.name}
-                        onValueChange={(value) => {
-                          const selectedItem = existingItems.find(
-                            (item) => item.name === value
-                          );
-
-                          if (selectedItem) {
-                            setNewItem((prev) => ({
-                              ...prev,
-                              itemId: selectedItem.id,
-                              name: selectedItem.name,
-                            }));
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="w-full ">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {existingItems.map((item) => (
-                            <SelectItem value={item.name} key={item.id}>
-                              {item.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <div className="flex border items-center w-full px-2 rounded-lg">
-                        <input
-                          type="text"
-                          className="w-full   rounded-md p-1 outline-none"
-                          value={newItem.quantity}
-                          onChange={(e) =>
-                            setNewItem((prev) => ({
-                              ...prev,
-                              quantity: e.target.value,
-                            }))
-                          }
-                        />
-                        <p className="text-sm">QTY</p>
-                      </div>
-                      <Button onClick={() => addItemToListHandler()}>
-                        Add
-                      </Button>
-                    </div>
-                    {items.length > 0 && (
-                      <div className="w-full flex flex-col gap-2">
-                        <label>Item List</label>
-                        <table className="w-full">
-                          <thead>
-                            <tr className="text-[#797979]">
-                              <th className="text-start font-medium py-2 border px-2 ">
-                                Item Name
-                              </th>
-                              <th className="text-end font-medium border px-2">
-                                Quantity
-                              </th>
-                              <th className="text-end font-medium border px-2">
-                                Action
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {items?.map((item) => (
-                              <tr key={item.itemId}>
-                                <td className="text-start font-medium py-2 border px-2 ">
-                                  {item.name}
-                                </td>
-                                <td className="text-end font-medium border px-2">
-                                  {item.quantity}
-                                </td>
-
-                                <td className="place-items-end font-medium border px-2">
-                                  <Trash
-                                    color="red"
-                                    size={20}
-                                    className="cursor-pointer"
-                                    onClick={() =>
-                                      removeItemFromListHandler(item.itemId)
-                                    }
-                                  />
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                    <div className="flex w-full justify-end">
-                      <Button onClick={onSubmit} disabled={loading}>
-                        {loading ? (
-                          <LoaderCircle size={24} className="animate-spin" />
-                        ) : (
-                          "Create Order"
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
-        <table className="h-full w-full ">
-          <thead>
-            <tr className="text-[#797979]">
-              <th className="text-start font-medium py-2">Order Date</th>
-              {isAdmin && (
-                <th className="text-start font-medium">Store Name</th>
+                <Calendar
+                  mode="single"
+                  selected={fromDate}
+                  captionLayout="dropdown"
+                  onSelect={(date) => {
+                    setFromDate(date);
+                    setOpenFromDate(false);
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
+            <Popover open={openToDate} onOpenChange={setOpenToDate}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  id="date"
+                  className="w-[30%] justify-between font-normal"
+                >
+                  {toDate ? toDate.toLocaleDateString() : "To Date"}
+                  <ChevronDownIcon />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-auto overflow-hidden p-0"
+                align="start"
+              >
+                <Calendar
+                  mode="single"
+                  selected={toDate}
+                  captionLayout="dropdown"
+                  onSelect={(date) => {
+                    setToDate(date);
+                    setOpenToDate(false);
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
+            <Button
+              className="border-primary w-[20%] cursor-pointer"
+              variant={"outline"}
+              onClick={filterOrders}
+            >
+              {isLoading ? (
+                <LoaderCircle size={24} className="animate-spin" />
+              ) : (
+                "Filter"
               )}
-              <th className="text-start font-medium">Items</th>
+            </Button>
+            <Button
+              className="w-[20%] cursor-pointer text-white"
+              onClick={exportOrderSummaryToExcel}
+            >
+              Export
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-end">
+            <Button
+              className="cursor-pointer text-white"
+              onClick={() => navigate("/order-form")}
+            >
+              Create new
+              <Plus size={20} />
+            </Button>
+          </div>
+        )}
+
+        <table className="h-full w-full">
+          <thead>
+            <tr className="border text-[#797979]">
+              {isAdmin && <th className="font-medium">Store</th>}
+              <th className="py-2 font-medium">Date</th>
+              <th className="font-medium">Time</th>
+              <th className="font-medium">Total item Count</th>
+              <th className="font-medium">Total item Value</th>
             </tr>
           </thead>
           <tbody>
             {orders?.map((order) => (
-              <tr key={order.id}>
-                <td className="text-start font-medium py-2 border px-2 ">
-                  {new Date(order.createdAt).toLocaleDateString()}
-                </td>
+              <tr
+                key={order.id}
+                className="hover:bg-slate-50"
+                onClick={() => [setSelectedOrder(order), setIsOpen(true)]}
+              >
                 {isAdmin && (
-                  <td className="text-start font-medium border px-2">
+                  <td className="border px-2 text-center font-medium">
                     {order.store.storeName}
                   </td>
                 )}
-                <td className="text-start font-medium border px-2">
-                  {order.Items?.map((item, i) => (
-                    <p key={i}>
-                      {item.quantity} {item.Items?.name}
-                    </p>
-                  ))}
+                <td className="border px-2 py-2 text-center font-medium">
+                  {new Date(order.createdAt).toLocaleDateString()}
+                </td>
+                <td className="border px-2 py-2 text-center font-medium">
+                  {new Date(order.createdAt).toLocaleTimeString()}
+                </td>
+                <td className="border px-2 text-center font-medium">
+                  {order.Items?.filter((item) => item.quantity > 0).length}
+                </td>
+                <td className="border px-2 text-center font-medium">
+                  {order.Items?.reduce((acc, item) => {
+                    const gst = (item.Items.price * item.Items.GST) / 100;
+                    const total = item.quantity * (item.Items.price + gst);
+                    return acc + total;
+                  }, 0).toFixed(2)}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger className="hidden"></DialogTrigger>
+        <DialogContent className="min-w-6xl">
+          <DialogHeader className="flex">
+            <div className="flex items-start justify-between pr-10">
+              <DialogTitle className="text-primary"></DialogTitle>
+              <div className="flex gap-5">
+                <button className="cursor-pointer" onClick={editOrderHandler}>
+                  <Pencil size={20} />
+                </button>
+                <AlertDialog>
+                  <AlertDialogTrigger className="cursor-pointer">
+                    <Trash size={20} color="red" />
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Alert!</AlertDialogTitle>
+                      <AlertDialogDescription className="font-medium text-black">
+                        Are you sure you want to remove this Order? This action
+                        is permanent and cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-[#FF4C4C] hover:bg-[#FF4C4C]/50"
+                        onClick={delteOrderHandler}
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </div>
+          </DialogHeader>
+          <DialogDescription></DialogDescription>
+          <table>
+            <thead>
+              <tr className="border text-[#797979]">
+                <th className="py-1 font-medium">SKU ID</th>
+                <th className="py-1 font-medium">Item</th>
+                <th className="font-medium">Unit</th>
+                <th className="font-medium">GST</th>
+                <th className="font-medium">QTY</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedOrder?.Items?.filter((item) => item.quantity !== 0).map(
+                (item, i) => (
+                  <tr key={i} className="border">
+                    <td className="py-1 text-center">{item.Items?.itemId}</td>
+                    <td className="py-1 text-center">{item.Items?.name}</td>
+                    <td className="text-center">{item.Items?.unit}</td>
+                    <td className="text-center">{item.Items?.GST}</td>
+                    <td className="text-center">{item.quantity}</td>
+                  </tr>
+                ),
+              )}
+            </tbody>
+          </table>
+          <div className="flex w-full justify-between font-medium">
+            <p>Total(₹)</p>
+            <p>
+              ₹{" "}
+              {selectedOrder?.Items?.reduce((acc, item) => {
+                const price = item.Items?.price || 0;
+                const gst = item.Items?.GST || 0;
+                const quantity = item.quantity || 0;
+                const totalWithGst = quantity * (price + (price * gst) / 100);
+                return acc + totalWithGst;
+              }, 0).toFixed(2)}
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

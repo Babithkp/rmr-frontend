@@ -13,3 +13,16 @@ export const adminLoginApi = async (username: string, password: string) => {
     console.log(error);
   }
 };
+
+export const uploadImagesApi = async (files: unknown) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/api/v1/upload`, files, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};

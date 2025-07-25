@@ -11,9 +11,27 @@ export const createStoreApi = async (data: unknown) => {
   }
 };
 
+export const deleteStoreApi = async (id: string) => {
+  try {
+    const response = await axios.delete(`${BASE_URL}/api/v1/store/delete/${id}`);
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 export const getAllStoresApi = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/api/v1/store/all`);
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const updateStoreApi = async (data: unknown) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/api/v1/store/update`, data);
     return response;
   } catch (error) {
     console.log(error);

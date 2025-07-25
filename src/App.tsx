@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router";
+import { Routes, Route, useLocation } from "react-router";
 import Home from "./components/home/Home";
 import Login from "./components/Login";
 import Store from "./components/store/Store";
@@ -7,9 +7,18 @@ import Receipt from "./components/receipt/Receipt";
 import Stocks from "./components/stock/Stocks";
 import Orders from "./components/order/Orders";
 import Report from "./components/report/Report";
+import Sidebar from "./components/Sidebar";
+import OrderForm from "./components/order/OrderForm";
+import OrderUpdate from "./components/order/OrderUpdate";
+
+
+
 function App() {
+  const location = useLocation();
+  console.log(location.pathname);
   return (
     <>
+      {location.pathname !== "/" && <Sidebar />}
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/home" element={<Home />} />
@@ -18,7 +27,9 @@ function App() {
         <Route path="/receipt" element={<Receipt />} />
         <Route path="/stock" element={<Stocks />} />
         <Route path="/order" element={<Orders />} />
-        <Route path="/report" element={<Report />} /> 
+        <Route path="/order-form" element={<OrderForm />} />
+        <Route path="/order-form/:orderId" element={<OrderUpdate />} />
+        <Route path="/report" element={<Report />} />
       </Routes>
     </>
   );

@@ -1,4 +1,5 @@
-import { Button } from "@/components/ui/button";import { GitBranch, LoaderCircle, Lock, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { GitBranch, LoaderCircle, Lock, User } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -11,6 +12,8 @@ import { adminLoginApi } from "@/api/admin";
 import { getAllStoresApi, storeLoginApi } from "@/api/store";
 import { useNavigate } from "react-router";
 import type { StoreInputs } from "./store/StoreList";
+import tikonaLogo from "@/assets/fullLogo-white.png";
+import Logo from "@/assets/Logo";
 
 export default function Login() {
   const [userName, setUserName] = useState("");
@@ -68,13 +71,16 @@ export default function Login() {
   }, []);
 
   return (
-    <main className="flex h-screen flex-col items-center justify-between">
+    <main className="flex h-screen flex-col items-center justify-between bg-primary-foreground w-full">
       <section className="grid h-full place-content-center">
         <form
-          className="flex w-[20rem] flex-col items-center gap-10"
+          className="flex w-[25rem] flex-col items-center gap-10 bg-white p-5 rounded-lg"
           onSubmit={onFormSubmit}
         >
-          {/* <img src={logo} alt="logo" /> */}
+          <div className="flex items-center gap-2">
+            <Logo />
+            <p>StockPilot</p>
+          </div>
           <h3 className="text-xl font-medium">Welcome Back!</h3>
           <div className="w-full">
             <Select onValueChange={setSelectedValue} value={selectedValue}>
@@ -131,14 +137,14 @@ export default function Login() {
           </Button>
         </form>
       </section>
-      {/* <footer className="bg-primary flex h-[4rem] w-full flex-col items-end justify-center px-10 text-sm text-white">
+      <footer className="bg-primary flex h-[4rem] w-full flex-col items-end justify-center px-10  text-white">
         <div className="flex items-center gap-2 font-medium">
-          <p>A Product of</p>
+          <p className="text-black text-lg">Made by</p>
           <a href="https://www.trikonatech.com" target="_blank">
             <img src={tikonaLogo} alt="tikona" className="w-30 " />
           </a>
         </div>
-      </footer> */}
+      </footer>
     </main>
   );
 }

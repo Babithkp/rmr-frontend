@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";import {
+import { useEffect, useRef, useState } from "react";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -7,43 +8,39 @@ import { useEffect, useState } from "react";import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
-import { LoaderCircle, Pencil, Plus, Trash } from "lucide-react";
-import { getAllStoresApi } from "@/api/store";
+import { LoaderCircle, Minus, Plus, Trash, Upload } from "lucide-react";
 import { toast } from "react-toastify";
 import { getAllItemsApi } from "@/api/item";
 import { Button } from "../ui/button";
-import type { StoreInputs } from "../store/StoreList";
 import type { ItemInputs } from "../item/ItemList";
 import {
+  deleteReceiptApi,
   receiptApproveApi,
   receiptCreateApi,
   receiptGetAllApi,
   receiptGetByStoreIdApi,
+  updateReceiptApi,
 } from "@/api/receipt";
+import * as XLSX from "xlsx";
 
-export interface ReceiptItem {
-  itemId: string;
-  name: string;
-  quantity: string;
-  price: number;
-  GST: string;
-}
-
-interface Receipt {
-  storeId: string;
+type TransformedStoreData = {
   storeName: string;
-  items: ReceiptItem[];
-  totalAmount: number;
-  totalTax: number;
-}
-
+  items: {
+    itemId: string;
+    quantity: number;
+  }[];
+};
 
 export type ReceiptItems = {
   id: string;
@@ -57,6 +54,7 @@ export type ReceiptItems = {
 
   Items: {
     id: string;
+    itemId: string;
     name: string;
     GST: string;
     price: number;
@@ -71,7 +69,7 @@ export type Receipts = {
   totalAmount: number;
   totalTax: number;
   status: string;
-  createdAt: string; 
+  createdAt: string;
   storeId: string;
   items: ReceiptItems[];
   Store: {
@@ -82,123 +80,272 @@ export type Receipts = {
 export default function ReceiptPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [storeId, setStoreId] = useState("");
-  const [formStatus, setFormStatus] = useState("New");
+  const [formStatus, setFormStatus] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [stores, setStores] = useState<StoreInputs[]>([]);
   const [existingItems, setExistingItems] = useState<ItemInputs[]>([]);
   const [loading, setLoading] = useState(false);
   const [receipts, setReceipts] = useState<Receipts[]>([]);
-  const [newItem, setNewItem] = useState<ReceiptItem>({
-    itemId: "",
-    name: "",
-    quantity: "",
-    price: 0,
-    GST: "",
-  });
-  const [receipt, setReceipt] = useState<Receipt>({
-    storeId: "",
-    storeName: "",
-    items: [],
-    totalAmount: 0,
-    totalTax: 0,
-  });
+  const [selectedReceipt, setSelectedReceipt] = useState<Receipts | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const excelRef = useRef<HTMLInputElement>(null);
+  const [tableData, setTableData] = useState<string[][]>([]);
 
-  const onApproveHandler = async (receiptId: string) => {
-    setLoading(true);
-    const response = await receiptApproveApi(receiptId, storeId);
-    if (response?.status === 200) {
-      toast.success("Receipt approved successfully");
-      if (isAdmin) {
-        getAllReceipts();
-      } else {
-        getReceiptsForStore(storeId);
-      }
-    } else {
-      toast.error("Something went wrong");
-    }
-    setLoading(false);
-  };
+  function transformTableData(
+    data: string[][],
+    existingItems: ItemInputs[],
+  ): TransformedStoreData[] {
+    const [headerRow, ...itemRows] = data;
+    const storeNames = headerRow.slice(2, -1).map((name) => name.trim());
 
-  const onSubmit = async () => {
-    setLoading(true);
+    const storeMap: Record<string, { itemId: string; quantity: number }[]> = {};
+    const storeTotals: Record<
+      string,
+      { totalAmount: number; totalTax: number }
+    > = {};
 
-    const response = await receiptCreateApi(receipt);
-    if (response?.status === 200) {
-      toast.success("Receipt created successfully");
-      setReceipt({
-        storeId: "",
-        storeName: "",
-        items: [],
-        totalAmount: 0,
-        totalTax: 0,
+    // Initialize
+    storeNames.forEach((store) => {
+      storeMap[store] = [];
+      storeTotals[store] = { totalAmount: 0, totalTax: 0 };
+    });
+
+    for (const row of itemRows) {
+      const skuId = row[0].trim();
+
+      storeNames.forEach((store, idx) => {
+        const quantity = Number(row[idx + 2]) || 0;
+
+        const matchedItem = existingItems.find(
+          (i) => i.itemId.trim() === skuId,
+        );
+        const price = matchedItem?.price ?? 0;
+        const gstPercent = matchedItem?.GST ? parseFloat(matchedItem.GST) : 0;
+
+        const itemAmount = quantity * price;
+        const itemTax = itemAmount * (gstPercent / 100);
+
+        storeMap[store].push({
+          itemId: skuId,
+          quantity,
+        });
+
+        storeTotals[store].totalAmount += itemAmount + itemTax;
+        storeTotals[store].totalTax += itemTax;
       });
-      setIsCreateModalOpen(false);
-    } else {
-      toast.error("Something went wrong");
+    }
+
+    // Final result
+    const result: TransformedStoreData[] = storeNames.map((storeName) => ({
+      storeName,
+      items: storeMap[storeName],
+      totalAmount: parseFloat(storeTotals[storeName].totalAmount.toFixed(2)),
+      totalTax: parseFloat(storeTotals[storeName].totalTax.toFixed(2)),
+    }));
+
+    return result;
+  }
+
+  function calculateReceiptTotals(items: ReceiptItems[]) {
+    let totalAmount = 0;
+    let totalTax = 0;
+
+    items.forEach((item) => {
+      const price = item.Items.price;
+      const gst = parseFloat(item.Items.GST || "0");
+      const quantity = item.quantity;
+
+      const tax = (price * gst * quantity) / 100;
+      const itemTotal = price * quantity + tax;
+
+      totalTax += tax;
+      totalAmount += itemTotal;
+    });
+
+    return { totalAmount, totalTax };
+  }
+
+  const addQuantityHandler = (id: string) => {
+    if (!selectedReceipt) return;
+
+    const updatedItems = selectedReceipt.items.map((item) => {
+      if (item.id === id) {
+        const newQuantity = item.quantity + 1;
+        return {
+          ...item,
+          quantity: newQuantity,
+        };
+      }
+      return item;
+    });
+
+    const { totalAmount, totalTax } = calculateReceiptTotals(updatedItems);
+
+    setSelectedReceipt((prev) =>
+      prev
+        ? {
+            ...prev,
+            items: updatedItems,
+            totalAmount,
+            totalTax,
+          }
+        : null,
+    );
+  };
+
+  const removeQuantityHandler = (id: string) => {
+    if (!selectedReceipt) return;
+
+    const updatedItems = selectedReceipt.items.map((item) => {
+      if (item.id === id) {
+        const newQuantity = Math.max(item.quantity - 1, 0);
+        return {
+          ...item,
+          quantity: newQuantity,
+        };
+      }
+      return item;
+    });
+
+    const { totalAmount, totalTax } = calculateReceiptTotals(updatedItems);
+
+    setSelectedReceipt((prev) =>
+      prev
+        ? {
+            ...prev,
+            items: updatedItems,
+            totalAmount,
+            totalTax,
+          }
+        : null,
+    );
+  };
+
+  const handleQuantityChange = (id: string, value: string) => {
+    const parsed = parseInt(value, 10);
+    if (isNaN(parsed) || parsed < 0 || !selectedReceipt) return;
+
+    const updatedItems = selectedReceipt.items.map((item) => {
+      if (item.id === id) {
+        return {
+          ...item,
+          quantity: parsed,
+        };
+      }
+      return item;
+    });
+
+    const { totalAmount, totalTax } = calculateReceiptTotals(updatedItems);
+
+    setSelectedReceipt((prev) =>
+      prev
+        ? {
+            ...prev,
+            items: updatedItems,
+            totalAmount,
+            totalTax,
+          }
+        : null,
+    );
+  };
+
+  const onDeleteHandler = async () => {
+    if (selectedReceipt?.id) {
+      const response = await deleteReceiptApi(selectedReceipt?.id);
+      if (response?.status === 200) {
+        toast.success("Receipt deleted successfully");
+        setIsOpen(false);
+        if (isAdmin) {
+          getAllReceipts();
+        } else {
+          getReceiptsForStore(storeId);
+        }
+      } else {
+        toast.error("Something went wrong");
+      }
+    }
+  };
+
+  const onRequestChangeHandler = async () => {
+    setLoading(true);
+    if (selectedReceipt?.id) {
+      const response = await updateReceiptApi({
+        id: selectedReceipt.id,
+        items: selectedReceipt.items,
+        totalAmount: selectedReceipt.totalAmount,
+        totalTax: selectedReceipt.totalTax,
+      });
+      if (response?.status === 200) {
+        toast.success("Receipt updated successfully");
+        setIsOpen(false);
+        setSelectedReceipt(null);
+        if (isAdmin) {
+          getAllReceipts();
+        } else {
+          getReceiptsForStore(storeId);
+        }
+      } else {
+        toast.error("Something went wrong");
+      }
     }
     setLoading(false);
   };
 
-  const addItemToListHandler = () => {
-    if (newItem.itemId === "" || newItem.quantity === "") {
-      toast.warn("Please select an item");
-      return;
-    }
-    if (receipt.items?.find((item) => item.itemId === newItem.itemId)) {
-      toast.warn("Item already exists");
-      return;
-    }
-    setReceipt((prev) => {
-      const updatedItems = [...prev.items, newItem];
-      console.log(receipt);
-      
-
-      const newTotal = updatedItems.reduce((sum, item) => sum + item.price, 0);
-
-      const newTax = updatedItems.reduce(
-        (sum, item) => sum + parseFloat(item.GST || "0"),
-        0
-      );
-
-      return {
-        ...prev,
-        items: updatedItems,
-        totalAmount: newTotal,
-        totalTax: newTax,
-      };
-    });
-
-    setNewItem({ itemId: "", name: "", quantity: "", price: 0, GST: "" });
+  const onSubmitTable = async () => {
+    const orders = transformTableData(tableData, existingItems);
+    setLoading(true);
+    Promise.all(
+      orders.map(async (order) => {
+        const response = await receiptCreateApi(order);
+        if (response?.status === 200) {
+          toast.success("Receipt created successfully");
+        } else {
+          toast.error("Something went wrong");
+        }
+      }),
+    );
+    setLoading(false);
   };
 
-  const removeItemFromListHandler = (itemId: string) => {
-    setReceipt((prev) => {
-      const updatedItems = prev.items.filter((item) => item.itemId !== itemId);
-      const newTotal = updatedItems.reduce((sum, item) => sum + item.price, 0);
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      const newTax = updatedItems.reduce(
-        (sum, item) => sum + parseFloat(item.GST || "0"),
-        0
-      );
+    const reader = new FileReader();
 
-      return {
-        ...prev,
-        items: updatedItems,
-        total: newTotal,
-        tax: newTax,
-      };
-    });
+    reader.onload = (event) => {
+      const data = new Uint8Array(event.target?.result as ArrayBuffer);
+      const workbook = XLSX.read(data, { type: "array" });
+
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData: string[][] = XLSX.utils.sheet_to_json(worksheet, {
+        header: 1, // Returns an array of arrays
+      });
+
+      setTableData(jsonData as string[][]);
+    };
+
+    reader.readAsArrayBuffer(file);
   };
 
-  async function getAllStores() {
-    const response = await getAllStoresApi();
-    if (response?.status === 200) {
-      setStores(response.data.data);
-    } else {
-      toast.error("Something went wrong");
-      console.log(response);
+  const onApproveHandler = async () => {
+    setLoading(true);
+    if (selectedReceipt?.id) {
+      const response = await receiptApproveApi(selectedReceipt?.id);
+      if (response?.status === 200) {
+        toast.success("Receipt approved successfully");
+        setIsOpen(false);
+        setSelectedReceipt(null);
+        if (isAdmin) {
+          getAllReceipts();
+        } else {
+          getReceiptsForStore(storeId);
+        }
+      } else {
+        toast.error("Something went wrong");
+      }
     }
-  }
+    setLoading(false);
+  };
 
   async function getAllItems() {
     const response = await getAllItemsApi();
@@ -229,7 +376,6 @@ export default function ReceiptPage() {
 
   useEffect(() => {
     getAllItems();
-    getAllStores();
     const admin = localStorage.getItem("isAdmin");
     if (admin === "true") {
       setIsAdmin(true);
@@ -244,259 +390,296 @@ export default function ReceiptPage() {
   }, []);
 
   return (
-    <section className="w-full px-20 ">
-      <div className="w-full p-2 px-5 border rounded-2xl">
-        <div className="flex justify-between items-center ">
+    <section className="w-full px-20">
+      <div className="w-full p-2">
+        <div className="flex items-center justify-between">
           <p className="text-lg font-medium">Receipts</p>
           {isAdmin && (
             <Dialog
               open={isCreateModalOpen}
               onOpenChange={setIsCreateModalOpen}
             >
-              <DialogTrigger
-                className="bg-primary hover:bg-primary flex cursor-pointer items-center gap-2 rounded-2xl p-2 px-4 font-medium text-white"
-                onClick={() => [setFormStatus("New")]}
-              >
-                <Plus color="white" size={20} />
+              <DialogTrigger className="border-primary text-primary flex cursor-pointer items-center gap-2 rounded-md border p-2 px-3 text-sm whitespace-nowrap">
+                <Plus size={20} />
                 Create new
               </DialogTrigger>
               <DialogContent className="min-w-5xl">
                 <DialogHeader>
-                  <DialogTitle>
-                    {formStatus == "New" ? "Create Receipt" : "Edit Receipt"}
-                  </DialogTitle>
+                  <DialogTitle>Create Receipt</DialogTitle>
                 </DialogHeader>
                 <DialogDescription></DialogDescription>
-                <div className="flex flex-col gap-5">
-                  <div className="w-full flex flex-col">
-                    <label>Select Store</label>
-                    <Select
-                      onValueChange={(value) => {
-                        const selectedStore = stores.find(
-                          (store) => store.id === value
-                        );
-                        if (selectedStore) {
-                          setReceipt((prev) => ({
-                            ...prev,
-                            storeId: selectedStore.id,
-                            storeName: selectedStore.storeName,
-                          }));
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select Store" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {stores.map((store) => (
-                          <SelectItem value={store.id} key={store.id}>
-                            {store.storeName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="w-full flex flex-col gap-2">
-                    <label>Select Item</label>
-                    <div className="flex items-center gap-5">
-                      <Select
-                        value={newItem.name}
-                        onValueChange={(value) => {
-                          const selectedItem = existingItems.find(
-                            (item) => item.name === value
-                          );
+                <div className="flex max-h-[80vh] flex-col gap-5 overflow-y-auto">
+                  {tableData.length === 0 && (
+                    <div className="flex flex-col gap-3">
+                      <p>Upload Order Form</p>
 
-                          if (selectedItem) {
-                            setNewItem((prev) => ({
-                              ...prev,
-                              itemId: selectedItem.id,
-                              name: selectedItem.name,
-                              price: selectedItem.price,
-                              GST: selectedItem.GST, 
-                            }));
-                          }
-                        }}
+                      <div
+                        className="grid w-full cursor-pointer place-items-center gap-3 rounded-md border border-dashed p-2 py-10 text-xs text-slate-500"
+                        onClick={() => excelRef.current?.click()}
                       >
-                        <SelectTrigger className="w-full ">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {existingItems.map((item) => (
-                            <SelectItem value={item.name} key={item.id}>
-                              {item.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <div className="flex border items-center w-full px-2 rounded-lg">
                         <input
-                          type="text"
-                          className="w-full   rounded-md p-1 outline-none"
-                          value={newItem.quantity}
-                          onChange={(e) =>
-                            setNewItem((prev) => ({
-                              ...prev,
-                              quantity: e.target.value,
-                            }))
-                          }
+                          type="file"
+                          className="hidden"
+                          id="file-upload"
+                          onChange={handleFileUpload}
+                          ref={excelRef}
                         />
-                        <p className="text-sm">QTY</p>
+                        <Upload size={30} />
+                        <p>Upload your order form Excel</p>
                       </div>
-                      <Button onClick={() => addItemToListHandler()}>
-                        Add
-                      </Button>
                     </div>
-                    {receipt.items.length > 0 && (
-                      <div className="w-full flex flex-col gap-2">
-                        <label>Item List</label>
-                        <table className="w-full">
-                          <thead>
-                            <tr className="text-[#797979]">
-                              <th className="text-start font-medium py-2 border px-2 ">
-                                Item Name
+                  )}
+                  {tableData.length > 0 && (
+                    <>
+                      <table className="w-full border-collapse border">
+                        <thead>
+                          <tr>
+                            {tableData[0].map((heading, index) => (
+                              <th key={index} className="border px-4 py-2">
+                                {heading}
                               </th>
-                              <th className="text-end font-medium border px-2">
-                                Quantity
-                              </th>
-                              <th className="text-end font-medium border px-2">
-                                Price
-                              </th>
-                              <th className="text-end font-medium border px-2">
-                                Tax
-                              </th>
-                              <th className="text-end font-medium border px-2">
-                                Action
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {receipt.items?.map((item) => (
-                              <tr key={item.itemId}>
-                                <td className="text-start font-medium py-2 border px-2 ">
-                                  {item.name}
-                                </td>
-                                <td className="text-end font-medium border px-2">
-                                  {item.quantity}
-                                </td>
-                                <td className="text-end font-medium border px-2">
-                                  {item.price}
-                                </td>
-                                <td className="text-end font-medium border px-2">
-                                  {item.GST}
-                                </td>
-                                <td className="place-items-end font-medium border px-2">
-                                  <Trash
-                                    color="red"
-                                    size={20}
-                                    className="cursor-pointer"
-                                    onClick={() =>
-                                      removeItemFromListHandler(item.itemId)
-                                    }
-                                  />
-                                </td>
-                              </tr>
                             ))}
-                            <tr>
-                              <td className=" font-medium border px-2 py-2">
-                                Total
-                              </td>
-                              <td className="border"></td>
-                              <td className="border text-end px-2">
-                                {receipt.totalAmount}
-                              </td>
-                              <td className="border text-end px-2">
-                                {receipt.totalTax}
-                              </td>
-                              <td className="border"></td>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {tableData.slice(1).map((row, rowIndex) => (
+                            <tr key={rowIndex}>
+                              {row.map((cell, colIndex) => (
+                                <td
+                                  key={colIndex}
+                                  className="border px-4 py-2 text-center"
+                                >
+                                  {cell}
+                                </td>
+                              ))}
                             </tr>
-                          </tbody>
-                        </table>
+                          ))}
+                        </tbody>
+                      </table>
+                      <div className="flex justify-end">
+                        <Button className="text-white" onClick={onSubmitTable}>
+                          {loading ? (
+                            <LoaderCircle size={24} className="animate-spin" />
+                          ) : (
+                            "Generate Receipts"
+                          )}
+                        </Button>
                       </div>
-                    )}
-                    <div className="flex w-full justify-end">
-                      <Button onClick={onSubmit}>
-                        {loading ? (
-                          <LoaderCircle size={24} className="animate-spin" />
-                        ) : (
-                          "Create Receipt"
-                        )}
-                      </Button>
-                    </div>
-                  </div>
+                    </>
+                  )}
                 </div>
               </DialogContent>
             </Dialog>
           )}
         </div>
-        <table className="h-full w-full mt-5">
+        <table className="mt-5 h-full w-full">
           <thead>
-            <tr className="text-[#797979]">
-              <th className="text-start font-medium py-2">Receipt Date</th>
-              <th className="text-start font-medium">Total Amount</th>
-              <th className="text-start font-medium">Total Tax</th>
-              {isAdmin && (
-                <th className="text-start font-medium">Store Name</th>
-              )}
-              <th className="text-start font-medium">Items</th>
-              <th className="text-end font-medium">Status</th>
-              <th className="text-end font-medium">Action</th>
+            <tr className="border text-[#797979]">
+              {isAdmin && <th className="font-medium">Store</th>}
+              <th className="font-medium">Date</th>
+              <th className="font-medium">Time</th>
+              <th className="font-medium">Total Item count</th>
+              <th className="font-medium">Total Item Value</th>
+              <th className="font-medium">Status</th>
             </tr>
           </thead>
           <tbody>
             {receipts.map((receipt) => (
-              <tr key={receipt.id}>
-                <td className="text-start font-medium py-2 border px-2 ">
-                  {new Date(receipt.createdAt).toLocaleDateString()}
-                </td>
-                <td className="text-start font-medium border px-2">
-                  {receipt.totalAmount}
-                </td>
-                <td className="text-start font-medium border px-2">
-                  {receipt.totalTax}
-                </td>
+              <tr
+                key={receipt.id}
+                className="cursor-pointer border hover:bg-slate-50"
+                onClick={() => [setSelectedReceipt(receipt), setIsOpen(true)]}
+              >
                 {isAdmin && (
-                  <td className="text-start font-medium border px-2">
+                  <td className="px-2 text-center font-medium">
                     {receipt.Store?.storeName}
                   </td>
                 )}
-                <td className="text-start font-medium border px-2">
-                  {receipt.items.map((item, i) => (
-                    <p key={i}>
-                      {item.quantity} {item.Items?.name}
-                    </p>
-                  ))}
+                <td className="px-2 py-2 text-center font-medium">
+                  {new Date(receipt.createdAt).toLocaleDateString()}
                 </td>
-                <td className="text-end font-medium border px-2 capitalize">
+                <td className="px-2 text-center font-medium">
+                  {new Date(receipt.createdAt).toLocaleTimeString()}
+                </td>
+                <td className="px-2 text-center font-medium">
+                  {receipt.items?.filter((item) => item.quantity > 0).length}
+                </td>
+                <td className="px-2 text-center font-medium">
+                  INR {receipt.totalAmount}
+                </td>
+                <td className="px-2 text-center font-medium capitalize">
                   {receipt.status}
-                </td>
-                {isAdmin && (
-                  <td className=" font-medium border px-2 flex h-full items-center justify-between">
-                    <Pencil size={20} className="cursor-pointer" />
-                    <Trash
-                      color="red"
-                      size={20}
-                      className="cursor-pointer"
-                      // onClick={() => deleteReceiptHandler(receipt.id)}
-                    />
-                  </td>
-                )}
-                <td className="flex justify-end h-full items-center border px-2">
-                  {receipt.status === "pending" && <Button
-                    onClick={() => onApproveHandler(receipt.id)}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <LoaderCircle size={24} className="animate-spin" />
-                    ) : (
-                      "Approve"
-                    )}
-                  </Button>}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger className="hidden"></DialogTrigger>
+        <DialogContent className="min-w-6xl">
+          <DialogHeader className="flex">
+            {isAdmin && selectedReceipt?.status !== "Approved" && (
+              <div className="flex items-start justify-between pr-10">
+                <DialogTitle className="text-primary"></DialogTitle>
+                <div>
+                  <AlertDialog>
+                    <AlertDialogTrigger className="cursor-pointer">
+                      <Trash size={20} color="red" />
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Alert!</AlertDialogTitle>
+                        <AlertDialogDescription className="font-medium text-black">
+                          Are you sure you want to remove this Order? This
+                          action is permanent and cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-[#FF4C4C] hover:bg-[#FF4C4C]/50"
+                          onClick={onDeleteHandler}
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+            )}
+          </DialogHeader>
+          <DialogDescription></DialogDescription>
+          <table>
+            <thead>
+              <tr className="border text-[#797979]">
+                <th className="py-1 font-medium">SKU ID</th>
+                <th className="py-1 font-medium">Item</th>
+                <th className="font-medium">Unit</th>
+                <th className="font-medium">GST</th>
+                <th className="font-medium">QTY</th>
+                <th className="font-medium">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedReceipt?.items
+                ?.filter((item) => item.quantity !== 0)
+                .map((item, i) => (
+                  <tr key={i} className="border">
+                    <td className="py-1 text-center">{item.Items?.itemId}</td>
+                    <td className="py-1 text-center">{item.Items?.name}</td>
+                    <td className="text-center">{item.Items?.unit}</td>
+                    <td className="text-center">{item.Items?.GST}</td>
+                    {formStatus === "" && (
+                      <td className="text-center">{item.quantity}</td>
+                    )}
+                    {formStatus === "edit" && (
+                      <td className="text-center">
+                        <div className="flex justify-center gap-2">
+                          <button
+                            className="bg-primary rounded-md p-1"
+                            onClick={() => removeQuantityHandler(item.id)}
+                          >
+                            <Minus className="size-5 text-white" />
+                          </button>
+                          <input
+                            className="w-10 rounded-md border px-1 text-black"
+                            value={item.quantity}
+                            type="text"
+                            onChange={(e) =>
+                              handleQuantityChange(item.id, e.target.value)
+                            }
+                            min={0}
+                          />
+                          <button
+                            className="bg-primary rounded-md p-1"
+                            onClick={() => addQuantityHandler(item.id)}
+                          >
+                            <Plus className="size-5 text-white" />
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                    <td className="text-center">
+                      {(
+                        (item.Items?.price ?? 0) * item.quantity +
+                        ((item.Items?.price ?? 0) *
+                          item.quantity *
+                          parseFloat(item.Items?.GST ?? "0")) /
+                          100
+                      ).toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+          <div className="flex w-full justify-between text-lg font-medium">
+            <p>Total(₹)</p>
+            <p>
+              ₹{" "}
+              {selectedReceipt?.items
+                ?.reduce((acc, item) => {
+                  const price = item.Items?.price || 0;
+                  const gst = item.Items?.GST || 0;
+                  const quantity = item.quantity || 0;
+                  const totalWithGst =
+                    quantity * (price + (price * (gst as number)) / 100);
+                  return acc + totalWithGst;
+                }, 0)
+                .toFixed(2)}
+            </p>
+          </div>
+          {!isAdmin &&
+            formStatus === "" &&
+            selectedReceipt?.status !== "Requested" &&
+            selectedReceipt?.status !== "Approved" && (
+              <div className="flex w-full justify-end gap-5">
+                <Button
+                  variant={"outline"}
+                  className="border-primary text-primary"
+                  onClick={() => setFormStatus("edit")}
+                >
+                  Modify
+                </Button>
+                <Button onClick={onApproveHandler} disabled={loading}>
+                  {loading ? (
+                    <LoaderCircle size={24} className="animate-spin" />
+                  ) : (
+                    "Approve"
+                  )}
+                </Button>
+              </div>
+            )}
+
+          {!isAdmin && formStatus === "edit" && (
+            <div className="flex w-full justify-end gap-5">
+              <Button
+                variant={"outline"}
+                className="border-primary text-primary"
+                onClick={() => [setFormStatus(""), setIsOpen(false)]}
+              >
+                Cancel
+              </Button>
+              <Button onClick={onRequestChangeHandler} className="text-white">
+                Request Change
+              </Button>
+            </div>
+          )}
+
+          {isAdmin && selectedReceipt?.status === "Requested" && (
+            <div className="flex w-full justify-end">
+              <Button onClick={onApproveHandler} disabled={loading}>
+                {loading ? (
+                  <LoaderCircle size={24} className="animate-spin" />
+                ) : (
+                  "Approve"
+                )}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

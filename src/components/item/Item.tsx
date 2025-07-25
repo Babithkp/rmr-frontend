@@ -2,9 +2,9 @@ import Navbar from "../Navbar";import ItemPage from "./ItemPage";
 
 export default function Item() {
   return (
-    <section className="flex flex-col items-center px-20">
+    <main className="flex flex-col items-center w-full">
       <Navbar />
       <ItemPage />
-    </section>
+    </main>
   );
 }

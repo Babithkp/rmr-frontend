@@ -3,7 +3,7 @@ import ReceiptPage from "./ReceiptPage";
 
 export default function Receipt() {
   return (
-    <section className="flex flex-col items-center px-20">
+    <section className="flex flex-col items-center w-full">
         <Navbar/>
         <ReceiptPage/>
     </section>

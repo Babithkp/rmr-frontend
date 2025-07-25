@@ -6,14 +6,13 @@ export const receiptCreateApi = async (data: unknown) => {
   try {
     const response = await axios.post(
       `${BASE_URL}/api/v1/receipt/create`,
-      data
+      data,
     );
     return response;
   } catch (error) {
     console.log(error);
   }
 };
-
 
 export const receiptGetAllApi = async () => {
   try {
@@ -33,9 +32,39 @@ export const receiptGetByStoreIdApi = async (storeId: string) => {
   }
 };
 
-export const receiptApproveApi = async (receiptId: string, storeId: string) => {
+export const receiptApproveApi = async (receiptId: string) => {
   try {
-    const response = await axios.post(`${BASE_URL}/api/v1/receipt/approve/${receiptId}/${storeId}`);
+    const response = await axios.post(
+      `${BASE_URL}/api/v1/receipt/approve/${receiptId}`,
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const updateReceiptApi = async (data: {
+  id: string;
+  items: unknown;
+  totalAmount: number;
+  totalTax: number;
+}) => {
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/api/v1/receipt/${data.id}`,
+      data,
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const deleteReceiptApi = async (receiptId: string) => {
+  try {
+    const response = await axios.delete(
+      `${BASE_URL}/api/v1/receipt/${receiptId}`,
+    );
     return response;
   } catch (error) {
     console.log(error);

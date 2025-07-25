@@ -11,7 +11,6 @@ export const createOrderApi = async (data: unknown) => {
   }
 };
 
-
 export const getAllOrdersApi = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/api/v1/order/all`);
@@ -21,10 +20,59 @@ export const getAllOrdersApi = async () => {
   }
 };
 
-
 export const getOrdersByStoreIdApi = async (storeId: string) => {
   try {
     const response = await axios.get(`${BASE_URL}/api/v1/order/${storeId}`);
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const deleteOrderApi = async (orderId: string) => {
+  try {
+    const response = await axios.delete(`${BASE_URL}/api/v1/order/${orderId}`);
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getOrderByIdApi = async (orderId: string) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/api/v1/order/order/${orderId}`,
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const updateOrderApi = async (data: {
+  orderId: string;
+  items: unknown;
+}) => {
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/api/v1/order/${data.orderId}`,
+      data,
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getOrdersByFromToDateApi = async (
+  fromDate: unknown,
+  toDate: unknown,
+) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/api/v1/order/fromToDate`, {
+      fromDate,
+      toDate,
+    });
     return response;
   } catch (error) {
     console.log(error);

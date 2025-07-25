@@ -30,6 +30,15 @@ export const deleteItemApi = async (id: string) => {
   }
 };
 
+export const updateItemApi = async (data: unknown) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/api/v1/item/update`, data);
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 export const createBomApi = async (data: unknown) => {
   try {
     const response = await axios.post(`${BASE_URL}/api/v1/item/bom/create`, data);
