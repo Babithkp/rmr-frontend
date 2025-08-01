@@ -484,7 +484,7 @@ export default function Orders() {
         <DialogContent className="min-w-6xl">
           <DialogHeader className="flex">
             <div className="flex items-start justify-between pr-10">
-              <DialogTitle className="text-primary"></DialogTitle>
+              <DialogTitle className="text-primary">Order ID: {selectedOrder?.orderId}</DialogTitle>
               <div className="flex gap-5">
                 <button className="cursor-pointer" onClick={editOrderHandler}>
                   <Pencil size={20} />
