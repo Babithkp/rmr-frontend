@@ -38,17 +38,6 @@ export const updateStoreApi = async (data: unknown) => {
   }
 };
 
-export const storeLoginApi = async (username: string, password: string) => {
-  try {
-    const response = await axios.post(`${BASE_URL}/api/v1/store/login`, {
-      username,
-      password,
-    });
-    return response;
-  } catch (error) {
-    console.log(error);
-  }
-};
 
 export const getStoreItemsApi = async (storeId: string) => {
   try {

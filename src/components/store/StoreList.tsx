@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";import {
+import { useEffect, useRef, useState } from "react";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -37,6 +38,7 @@ import {
 } from "@/api/store";
 import { toast } from "react-toastify";
 import { uploadImagesApi } from "@/api/admin";
+import { getStoreIdApi } from "@/api/settings";
 
 export interface StoreInputs {
   id: string;
@@ -63,6 +65,7 @@ export default function StoreList() {
   const [showPassword, setShowPassword] = useState(false);
   const imageRef = useRef<HTMLInputElement>(null);
   const [image, setImage] = useState<File | null | string>(null);
+  const [storeId, setStoreId] = useState<string>("");
 
   const {
     register,
@@ -118,6 +121,7 @@ export default function StoreList() {
         toast.success("Branch created successfully");
         setIsCreateModalOpen(false);
         getAllStores();
+        getStoreId()
         reset();
         setImage(null);
       } else if (response?.status === 204) {
@@ -166,23 +170,39 @@ export default function StoreList() {
     }
   }
 
+  async function getStoreId() {
+    const response = await getStoreIdApi();
+    if (response?.status === 200) {
+      setStoreId("shop" + response.data.data);
+    } else {
+      toast.error("Something went wrong");
+    }
+  }
+
+  useEffect(() => {
+    if (storeId) {
+      setValue("storeId", storeId);
+    }
+  }, [storeId, setValue]);
+
   useEffect(() => {
     getAllStores();
+    getStoreId();
   }, []);
   return (
-    <section className="w-full px-20 ">
-      <div className="flex  gap-5">
-        <div className="border w-full rounded-md flex items-center px-2 gap-2">
+    <section className="w-full px-20">
+      <div className="flex gap-5">
+        <div className="flex w-full items-center gap-2 rounded-md border px-2">
           <Search className="text-slate-600" size={20} />
           <input
             type="text"
-            className="w-full outline-none "
+            className="w-full outline-none"
             placeholder="Store"
           />
         </div>
         <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
           <DialogTrigger
-            className="border border-primary text-primary flex cursor-pointer items-center gap-2 rounded-md text-sm w-35 p-2 font-medium"
+            className="border-primary text-primary flex w-35 cursor-pointer items-center gap-2 rounded-md border p-2 text-sm font-medium"
             onClick={() => [setFormStatus("New"), reset()]}
           >
             Create new
@@ -196,11 +216,11 @@ export default function StoreList() {
             </DialogHeader>
             <DialogDescription></DialogDescription>
             <form
-              className="flex flex-wrap justify-between gap-5 items-end"
+              className="flex flex-wrap items-end justify-between gap-5"
               onSubmit={handleSubmit(onSubmit)}
             >
               <div
-                className="w-[15%] border border-dashed h-35 flex items-center justify-center flex-col text-sm text-slate-600 rounded-md cursor-pointer"
+                className="flex h-35 w-[15%] cursor-pointer flex-col items-center justify-center rounded-md border border-dashed text-sm text-slate-600"
                 onClick={() => imageRef.current?.click()}
               >
                 <input
@@ -223,12 +243,12 @@ export default function StoreList() {
                         ? image
                         : URL.createObjectURL(image)
                     }
-                    className="w-full h-full rounded-md"
+                    className="h-full w-full rounded-md"
                     alt="Uploaded preview"
                   />
                 )}
               </div>
-              <div className="w-[40%] h-fit">
+              <div className="h-fit w-[40%]">
                 <div className="flex w-full flex-col gap-2">
                   <label>Store ID</label>
                   <input
@@ -238,6 +258,9 @@ export default function StoreList() {
                       required: true,
                       minLength: 3,
                     })}
+                    disabled
+                    value={storeId}
+                    onChange={(e) => setStoreId(e.target.value)}
                   />
                 </div>
                 {errors.storeId && (
@@ -381,10 +404,10 @@ export default function StoreList() {
           </DialogContent>
         </Dialog>
       </div>
-      <table className=" w-full mt-5">
+      <table className="mt-5 w-full">
         <thead>
-          <tr className="text-[#797979]  border">
-            <th className="text-center font-medium py-2">Store ID</th>
+          <tr className="border text-[#797979]">
+            <th className="py-2 text-center font-medium">Store ID</th>
             <th className="text-center font-medium">Store</th>
             <th className="text-center font-medium">Owner Name</th>
             <th className="text-center font-medium">Location</th>
@@ -401,13 +424,11 @@ export default function StoreList() {
                 setIsStoreDetailsModalOpen(true),
               ]}
             >
-              <td className="text-center font-medium py-2">{store.storeId}</td>
-              <td className="text-center font-medium  ">{store.storeName}</td>
-              <td className="text-center font-medium  ">
-                {store.storeManager}
-              </td>
-              <td className="text-center font-medium  ">{store.location}</td>
-              <td className="text-center font-medium  ">{store.username}</td>
+              <td className="py-2 text-center font-medium">{store.storeId}</td>
+              <td className="text-center font-medium">{store.storeName}</td>
+              <td className="text-center font-medium">{store.storeManager}</td>
+              <td className="text-center font-medium">{store.location}</td>
+              <td className="text-center font-medium">{store.username}</td>
             </tr>
           ))}
         </tbody>
@@ -465,7 +486,7 @@ export default function StoreList() {
             </div>
           </DialogHeader>
           <DialogDescription></DialogDescription>
-          <div className="grid grid-cols-3 gap-5 ">
+          <div className="grid grid-cols-3 gap-5">
             <div className="flex items-center gap-5">
               <img
                 src={selectedStore?.image}
@@ -489,7 +510,7 @@ export default function StoreList() {
               <label className="font-medium">Owner</label>
               <p>{selectedStore?.storeManager}</p>
             </div>
-            <div className="flex items-center gap-5 col-span-2">
+            <div className="col-span-2 flex items-center gap-5">
               <label className="font-medium">Conatct Number</label>
               <p>{selectedStore?.contactNumber}</p>
             </div>

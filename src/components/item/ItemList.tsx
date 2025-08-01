@@ -44,6 +44,7 @@ import {
 } from "@/api/item";
 import { toast } from "react-toastify";
 import { uploadImagesApi } from "@/api/admin";
+import { getItemIdApi } from "@/api/settings";
 
 export interface ItemInputs {
   id: string;
@@ -80,15 +81,19 @@ export default function ItemList({
   const imageRef = useRef<HTMLInputElement>(null);
   const [selectedItem, setSelectedItem] = useState<ItemInputs | null>(null);
   const [isItemDetailsModalOpen, setIsItemDetailsModalOpen] = useState(false);
+  const [itemId, setItemId] = useState<string>("");
 
   const {
     register,
     handleSubmit,
     reset,
     control,
+    watch,
     setValue,
     formState: { errors },
   } = useForm<ItemInputs>();
+
+  const quantityType = watch("quantityType");
 
   const onSubmit: SubmitHandler<ItemInputs> = async (data) => {
     setIsLoading(true);
@@ -113,6 +118,7 @@ export default function ItemList({
         reset();
         setImage(null);
         getAllItems();
+        getItemId();
       } else if (response?.status === 204) {
         setIsItemIdAvailable(true);
         setTimeout(() => {
@@ -182,14 +188,35 @@ export default function ItemList({
   async function getAllItems() {
     const response = await getAllItemsApi();
     if (response?.status === 200) {
-      setItems(response.data.data);
+      const items = response.data.data;
+      setItems(
+        [...items].sort((a: ItemInputs, b: ItemInputs) =>
+          a.category.localeCompare(b.category),
+        ),
+      );
+    } else {
+      toast.error("Something went wrong");
+    }
+  }
+
+  async function getItemId() {
+    const response = await getItemIdApi();
+    if (response?.status === 200) {
+      setItemId("IM" + response.data.data);
     } else {
       toast.error("Something went wrong");
     }
   }
 
   useEffect(() => {
+    if (itemId) {
+      setValue("itemId", itemId);
+    }
+  }, [itemId, setValue]);
+
+  useEffect(() => {
     getAllItems();
+    getItemId();
   }, []);
   return (
     <>
@@ -243,6 +270,9 @@ export default function ItemList({
                       required: true,
                       minLength: 3,
                     })}
+                    value={itemId}
+                    onChange={(e) => setItemId(e.target.value)}
+                    disabled
                   />
                 </div>
                 {errors.itemId && (
@@ -293,29 +323,47 @@ export default function ItemList({
               </div>
               <div className="w-[48%]">
                 <div className="flex w-full flex-col gap-2">
-                  <label>GST</label>
-                  <input
-                    type="text"
-                    className="border-primary rounded-md border p-1 py-2 pl-2"
-                    {...register("GST", {
-                      required: true,
-                    })}
+                  <label>Quantity Type</label>
+                  <Controller
+                    name="quantityType"
+                    control={control}
+                    defaultValue={""}
+                    rules={{ required: true }}
+                    render={({ field }) => (
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <SelectTrigger
+                          className="w-full"
+                          style={{ border: "1px solid #64BAFF" }}
+                        >
+                          <SelectValue placeholder="Select Quantity Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Full only">Full only</SelectItem>
+                          <SelectItem value="Loose">Loose</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
                   />
                 </div>
-                {errors.GST && (
+                {errors.quantityType && (
                   <p className="mt-1 text-sm text-red-500">
-                    Item GST is required
+                    select Quantity Type is required
                   </p>
                 )}
               </div>
+
               <div className="w-[48%]">
                 <div className="flex w-full flex-col gap-2">
                   <label>Net Weight</label>
                   <input
                     type="text"
+                    disabled={quantityType !== "Loose"}
                     className="border-primary rounded-md border p-1 py-2 pl-2"
                     {...register("netWeight", {
-                      required: true,
+                      required: quantityType === "Loose",
                     })}
                   />
                 </div>
@@ -330,9 +378,10 @@ export default function ItemList({
                   <label>Gross Weight</label>
                   <input
                     type="text"
+                    disabled={quantityType !== "Loose"}
                     className="border-primary rounded-md border p-1 py-2 pl-2"
                     {...register("grossWeight", {
-                      required: true,
+                      required: quantityType === "Loose",
                     })}
                   />
                 </div>
@@ -342,6 +391,7 @@ export default function ItemList({
                   </p>
                 )}
               </div>
+
               <div className="flex w-full gap-5">
                 <button
                   className="border-primary grid w-[30%] gap-2 rounded-lg border border-dashed text-xs text-slate-500"
@@ -450,38 +500,21 @@ export default function ItemList({
                       </p>
                     )}
                   </div>
+
                   <div className="w-[48%]">
                     <div className="flex w-full flex-col gap-2">
-                      <label>Quantity Type</label>
-                      <Controller
-                        name="quantityType"
-                        control={control}
-                        defaultValue={""}
-                        rules={{ required: true }}
-                        render={({ field }) => (
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <SelectTrigger
-                              className="w-full"
-                              style={{ border: "1px solid #64BAFF" }}
-                            >
-                              <SelectValue placeholder="Select Quantity Type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Full only">
-                                Full only
-                              </SelectItem>
-                              <SelectItem value="Loose">Loose</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        )}
+                      <label>GST</label>
+                      <input
+                        type="text"
+                        className="border-primary rounded-md border p-1 py-2 pl-2"
+                        {...register("GST", {
+                          required: true,
+                        })}
                       />
                     </div>
-                    {errors.quantityType && (
+                    {errors.GST && (
                       <p className="mt-1 text-sm text-red-500">
-                        select Quantity Type is required
+                        Item GST is required
                       </p>
                     )}
                   </div>
@@ -513,7 +546,7 @@ export default function ItemList({
               <th className="text-center font-medium">Item Name</th>
               <th className="text-center font-medium">Unit</th>
               <th className="text-center font-medium">Price</th>
-              <th className="text-center font-medium">MOQ</th>
+              <th className="text-center font-medium">Category</th>
             </tr>
           </thead>
           <tbody>
@@ -530,7 +563,7 @@ export default function ItemList({
                 <td className="text-center font-medium">{item.name}</td>
                 <td className="text-center font-medium">{item.unit}</td>
                 <td className="text-center font-medium">INR {item.price}</td>
-                <td className="text-center font-medium">{0}</td>
+                <td className="text-center font-medium">{item.category}</td>
               </tr>
             ))}
           </tbody>
@@ -594,9 +627,13 @@ export default function ItemList({
               <label className="font-medium">Item ID</label>
               <p className="font-light">{selectedItem?.itemId}</p>
             </div>
-            <div className="col-span-2 flex items-end gap-5">
+            <div className="flex items-end gap-5">
               <label className="font-medium">Item Name</label>
               <p className="font-light">{selectedItem?.name}</p>
+            </div>
+            <div className="flex items-center gap-5">
+              <label className="font-medium">Category</label>
+              <p className="font-light">{selectedItem?.category}</p>
             </div>
             <div className="flex items-center gap-5">
               <label className="font-medium">Price</label>
@@ -617,6 +654,7 @@ export default function ItemList({
                 {selectedItem?.unit}
               </p>
             </div>
+
             <div className="items-center gap-5">
               <label className="font-medium">Item Image</label>
               <img

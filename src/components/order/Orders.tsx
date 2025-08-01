@@ -39,7 +39,6 @@ import { toast } from "react-toastify";
 
 import {
   deleteOrderApi,
-  getAllOrdersApi,
   getOrdersByFromToDateApi,
   getOrdersByStoreIdApi,
 } from "@/api/order";
@@ -52,6 +51,7 @@ import type { ItemInputs } from "../item/ItemList";
 
 type OrderResponse = {
   id: string;
+  orderId: string;
   createdAt: string;
   Items: OrderItem[];
   store: Store;
@@ -91,13 +91,12 @@ export default function Orders() {
   );
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [datesInitialized, setDatesInitialized] = useState(false);
   const [itemMaster, setItemMaster] = useState<ItemInputs[]>([]);
   const navigate = useNavigate();
 
   const filterOrders = async () => {
     if (fromDate && toDate) {
-      console.log(fromDate, toDate);
-      
       setIsLoading(true);
       const response = await getOrdersByFromToDateApi(fromDate, toDate);
       if (response?.status === 200) {
@@ -197,7 +196,7 @@ export default function Orders() {
     }
   };
 
-  const delteOrderHandler = () => {
+  const deleteOrderHandler = () => {
     if (selectedOrder?.createdAt) {
       const createdAt = new Date(selectedOrder.createdAt);
 
@@ -228,7 +227,7 @@ export default function Orders() {
       if (response?.status === 200) {
         toast.success("Order deleted successfully");
         if (isAdmin) {
-          getAllOrders();
+          getTodaysOrders();
         } else {
           getOrdersForStore(selectedOrder.store.id);
         }
@@ -240,19 +239,12 @@ export default function Orders() {
     }
   };
 
-  async function getAllOrders() {
-    const response = await getAllOrdersApi();
-    if (response?.status === 200) {
-      setOrders(response.data.data);
-    } else {
-      toast.error("Something went wrong");
-    }
-  }
-
   async function getOrdersForStore(storeId: string) {
     const response = await getOrdersByStoreIdApi(storeId);
     if (response?.status === 200) {
       setOrders(response.data.data);
+      console.log(response.data.data);
+      
     } else {
       toast.error("Something went wrong");
     }
@@ -267,12 +259,25 @@ export default function Orders() {
     }
   }
 
+  function getTodaysOrders() {
+    const yesterday6PM = new Date();
+    yesterday6PM.setDate(yesterday6PM.getDate() - 1);
+    yesterday6PM.setHours(18, 0, 0, 0);
+    setFromDate(yesterday6PM);
+    setToDate(new Date());
+  }
+
+  useEffect(() => {
+    if (datesInitialized && fromDate && toDate) {
+      filterOrders();
+    }
+  }, [datesInitialized, fromDate, toDate]);
+
   useEffect(() => {
     getAllItems();
     const isadmin = localStorage.getItem("isAdmin");
     if (isadmin === "true") {
       setIsAdmin(true);
-      getAllOrders();
     } else {
       const store = localStorage.getItem("store");
       if (store) {
@@ -280,6 +285,8 @@ export default function Orders() {
         setIsAdmin(false);
       }
     }
+    setDatesInitialized(true);
+    getTodaysOrders();
   }, []);
 
   return (
@@ -428,6 +435,7 @@ export default function Orders() {
         <table className="h-full w-full">
           <thead>
             <tr className="border text-[#797979]">
+              <th className="py-2 font-medium">Order ID</th>
               {isAdmin && <th className="font-medium">Store</th>}
               <th className="py-2 font-medium">Date</th>
               <th className="font-medium">Time</th>
@@ -442,6 +450,9 @@ export default function Orders() {
                 className="hover:bg-slate-50"
                 onClick={() => [setSelectedOrder(order), setIsOpen(true)]}
               >
+                <td className="border px-2 py-2 text-center font-medium">
+                  {order.orderId}
+                </td>
                 {isAdmin && (
                   <td className="border px-2 text-center font-medium">
                     {order.store.storeName}
@@ -494,7 +505,7 @@ export default function Orders() {
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         className="bg-[#FF4C4C] hover:bg-[#FF4C4C]/50"
-                        onClick={delteOrderHandler}
+                        onClick={deleteOrderHandler}
                       >
                         Delete
                       </AlertDialogAction>
