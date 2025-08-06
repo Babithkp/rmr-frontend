@@ -2,7 +2,6 @@ import axios from "axios";
 // const BASE_URL = "http://localhost:3000";
 const BASE_URL = "https://rmr-backend.vercel.app";
 
-
 export const createItemApi = async (data: unknown) => {
   try {
     const response = await axios.post(`${BASE_URL}/api/v1/item/create`, data);
@@ -41,7 +40,10 @@ export const updateItemApi = async (data: unknown) => {
 
 export const createBomApi = async (data: unknown) => {
   try {
-    const response = await axios.post(`${BASE_URL}/api/v1/item/bom/create`, data);
+    const response = await axios.post(
+      `${BASE_URL}/api/v1/item/bom/create`,
+      data,
+    );
     return response;
   } catch (error) {
     console.log(error);
@@ -60,6 +62,18 @@ export const getAllBomsApi = async () => {
 export const deleteBomApi = async (id: string) => {
   try {
     const response = await axios.delete(`${BASE_URL}/api/v1/item/bom/${id}`);
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const updateBomApi = async (data: unknown, id: string) => {
+  try {
+    const response = await axios.put(
+      `${BASE_URL}/api/v1/item/bom/update/${id}`,
+      data,
+    );
     return response;
   } catch (error) {
     console.log(error);

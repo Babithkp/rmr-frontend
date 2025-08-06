@@ -399,7 +399,7 @@ export default function Report() {
   }, []);
 
   return (
-    <main className="px-20 flex flex-col gap-5 h-screen overflow-auto">
+    <main className="px-20 flex flex-col gap-5 h-screen overflow-auto w-full">
       <Navbar />
       <section>
         <h1 className="text-2xl font-medium">Opening Stocks Submited Today</h1>

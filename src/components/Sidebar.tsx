@@ -34,24 +34,28 @@ export default function Sidebar() {
           <LayoutDashboard size={30} />
           <p>Dashboard</p>
         </a>
-        {isAdmin && <a
-          href="/store"
-          className={`flex cursor-pointer flex-col items-center gap-2 p-1 hover:bg-[#0000001A] ${
-            location.pathname === "/store" && "bg-[#0000001A]"
-          }`}
-        >
-          <Store size={30} />
-          <p>Stores</p>
-        </a>}
-        {isAdmin && <a
-          href="/inventory"
-          className={`flex cursor-pointer flex-col items-center gap-2 p-1 hover:bg-[#0000001A] ${
-            location.pathname === "/inventory" && "bg-[#0000001A]"
-          }`}
-        >
-          <Archive size={30} />
-          <p className="text-center">Item Management</p>
-        </a>}
+        {isAdmin && (
+          <a
+            href="/store"
+            className={`flex cursor-pointer flex-col items-center gap-2 p-1 hover:bg-[#0000001A] ${
+              location.pathname === "/store" && "bg-[#0000001A]"
+            }`}
+          >
+            <Store size={30} />
+            <p>Stores</p>
+          </a>
+        )}
+        {isAdmin && (
+          <a
+            href="/inventory"
+            className={`flex cursor-pointer flex-col items-center gap-2 p-1 hover:bg-[#0000001A] ${
+              location.pathname === "/inventory" && "bg-[#0000001A]"
+            }`}
+          >
+            <Archive size={30} />
+            <p className="text-center">Item Management</p>
+          </a>
+        )}
         <a
           href="/order"
           className={`flex cursor-pointer flex-col items-center gap-2 p-1 hover:bg-[#0000001A] ${
@@ -70,15 +74,28 @@ export default function Sidebar() {
           <ReceiptText size={30} />
           <p className="text-center">Receipts</p>
         </a>
-        <a
-          href="/report"
-          className={`flex cursor-pointer flex-col items-center gap-2 p-1 hover:bg-[#0000001A] ${
-            location.pathname === "/report" && "bg-[#0000001A]"
-          }`}
-        >
-          <BookA size={30} />
-          <p className="text-center">Closing Stock</p>
-        </a>
+        {isAdmin && (
+          <a
+            href="/Closing-stock"
+            className={`flex cursor-pointer flex-col items-center gap-2 p-1 hover:bg-[#0000001A] ${
+              location.pathname === "/report" && "bg-[#0000001A]"
+            }`}
+          >
+            <BookA size={30} />
+            <p className="text-center">Report</p>
+          </a>
+        )}
+        {!isAdmin && (
+          <a
+            href="/closing-stock-form"
+            className={`flex cursor-pointer flex-col items-center gap-2 p-1 hover:bg-[#0000001A] ${
+              location.pathname === "/report" && "bg-[#0000001A]"
+            }`}
+          >
+            <BookA size={30} />
+            <p className="text-center">Closing Stock</p>
+          </a>
+        )}
       </div>
     </nav>
   );

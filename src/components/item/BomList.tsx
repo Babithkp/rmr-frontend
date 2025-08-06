@@ -39,6 +39,7 @@ import {
   deleteBomApi,
   getAllBomsApi,
   getAllItemsApi,
+  updateBomApi,
 } from "@/api/item";
 import { toast } from "react-toastify";
 import { Button } from "../ui/button";
@@ -50,6 +51,7 @@ export interface ItemSet {
   quantity: string;
   name: string;
   Items?: {
+    id: string;
     name: string;
     unit: string;
   };
@@ -96,38 +98,70 @@ export default function BomList({
       toast.warn("Please fill all the fields");
       return;
     }
+
     setIsLoading(true);
+
     const data = {
       name: bomName,
       items: newItemList,
       image: "",
     };
-    if (image) {
-      const formData = new FormData();
-      const img = image as File;
-      formData.append("file", img, new Date().getTime() + img.name);
-      const response = await uploadImagesApi(formData);
-      if (response?.status === 200) {
-        data.image = response.data.data[0].url;
-        toast.success("Image uploaded successfully");
-      }
-    }
 
-    const response = await createBomApi(data);
-    if (response?.status === 200) {
-      toast.success("BOM created successfully");
-      setIsCreateModalOpen(false);
-      setNewItemList([]);
-      setBomName("");
-      getAllBoms();
-      setImage(null);
-    } else if (response?.status === 204) {
-      setIsBomNameAvailable(true);
-      setTimeout(() => {
-        setIsBomNameAvailable(false);
-      }, 3000);
-    } else {
-      toast.error("Something went wrong");
+    if (formStatus === "New") {
+      if (image) {
+        const formData = new FormData();
+        const img = image as File;
+        formData.append("file", img, new Date().getTime() + img.name);
+        const response = await uploadImagesApi(formData);
+        if (response?.status === 200) {
+          data.image = response.data.data[0].url;
+          toast.success("Image uploaded successfully");
+        }
+      }
+
+      const response = await createBomApi(data);
+      if (response?.status === 200) {
+        toast.success("BOM created successfully");
+        setIsCreateModalOpen(false);
+        setNewItemList([]);
+        setBomName("");
+        getAllBoms();
+        setImage(null);
+      } else if (response?.status === 204) {
+        setIsBomNameAvailable(true);
+        setTimeout(() => {
+          setIsBomNameAvailable(false);
+        }, 3000);
+      } else {
+        toast.error("Something went wrong");
+      }
+    } else if (selectedItem) {
+      if (typeof image === "string") {
+        data.image = image;
+      } else {
+        if (image) {
+          const formData = new FormData();
+          const img = image as File;
+          formData.append("file", img, new Date().getTime() + img.name);
+          const response = await uploadImagesApi(formData);
+          if (response?.status === 200) {
+            data.image = response.data.data[0].url;
+            toast.success("Image uploaded successfully");
+          }
+        } else {
+          data.image = "";
+        }
+      }
+      const response = await updateBomApi(data, selectedItem?.id);
+      if (response && response?.status === 200) {
+        toast.success("BOM updated successfully");
+        setIsCreateModalOpen(false);
+        getAllBoms();
+        setSelectedItem(null);
+        setImage(null);
+      } else {
+        toast.error("Something went wrong");
+      }
     }
     setIsLoading(false);
   };
@@ -147,6 +181,17 @@ export default function BomList({
 
   const removeItemFromListHandler = (itemId: string) => {
     setNewItemList((prev) => prev.filter((item) => item.itemId !== itemId));
+  };
+
+  const setDataToEditDetails = (bom: BOM) => {
+    setImage(bom.image);
+    setBomName(bom.name);
+    const items = bom.Items.map((item) => ({
+      itemId: item.Items?.id,
+      name: item.Items?.name,
+      quantity: item.quantity,
+    }));
+    setNewItemList(items as ItemSet[]);
   };
 
   async function deleteBomHandler() {
@@ -174,7 +219,6 @@ export default function BomList({
     const response = await getAllBomsApi();
     if (response?.status === 200) {
       setBomList(response.data.data);
-      console.log(response.data.data);
     } else {
       toast.error("Something went wrong");
     }
@@ -187,12 +231,12 @@ export default function BomList({
 
   return (
     <>
-      <div className="w-full px-20 flex gap-5">
-        <div className="border w-full rounded-md flex items-center px-2 gap-2">
+      <div className="flex w-full gap-5 px-20">
+        <div className="flex w-full items-center gap-2 rounded-md border px-2">
           <Search className="text-slate-600" size={20} />
           <input
             type="text"
-            className="w-full outline-none "
+            className="w-full outline-none"
             placeholder="Search BOMs"
           />
         </div>
@@ -211,7 +255,7 @@ export default function BomList({
 
         <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
           <DialogTrigger
-            className="border-primary text-primary whitespace-nowrap flex border rounded-md p-1 items-center text-sm gap-2 px-2 cursor-pointer"
+            className="border-primary text-primary flex cursor-pointer items-center gap-2 rounded-md border p-1 px-2 text-sm whitespace-nowrap"
             onClick={() => [setFormStatus("New")]}
           >
             Create BOM
@@ -224,9 +268,9 @@ export default function BomList({
               </DialogTitle>
             </DialogHeader>
             <DialogDescription></DialogDescription>
-            <div className="flex flex-wrap justify-between gap-5 items-end">
+            <div className="flex flex-wrap items-end justify-between gap-5">
               <button
-                className="w-[25%] text-xs gap-2 text-slate-500 grid rounded-lg border border-dashed border-primary h-40"
+                className="border-primary grid h-40 w-[25%] gap-2 rounded-lg border border-dashed text-xs text-slate-500"
                 onClick={() => imageRef.current?.click()}
                 type="button"
               >
@@ -250,18 +294,19 @@ export default function BomList({
                         ? image
                         : URL.createObjectURL(image)
                     }
-                    className="w-full h-full rounded-md object-cover"
+                    className="h-40 w-full rounded-md"
                     alt="Uploaded preview"
                   />
                 )}
               </button>
-              <div className="flex w-[70%] flex-col gap-2 ">
+              <div className="flex w-[70%] flex-col gap-2">
                 <label>BOM Name</label>
                 <input
                   type="text"
-                  className="border-primary rounded-md border p-1 py-2 pl-2 "
+                  className="border-primary rounded-md border p-1 py-2 pl-2"
                   value={bomName}
                   onChange={(e) => setBomName(e.target.value)}
+                  disabled={formStatus === "editing"}
                 />
               </div>
               <div className="w-full">
@@ -271,7 +316,7 @@ export default function BomList({
                     value={newItem.name}
                     onValueChange={(value) => {
                       const selectedItem = existingItems.find(
-                        (item) => item.name === value
+                        (item) => item.name === value,
                       );
 
                       if (selectedItem) {
@@ -283,7 +328,7 @@ export default function BomList({
                       }
                     }}
                   >
-                    <SelectTrigger className="w-full border-primary">
+                    <SelectTrigger className="border-primary w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -294,10 +339,10 @@ export default function BomList({
                       ))}
                     </SelectContent>
                   </Select>
-                  <div className="flex border items-center w-full px-2 rounded-lg border-primary">
+                  <div className="border-primary flex w-full items-center rounded-lg border px-2">
                     <input
                       type="text"
-                      className="w-full   rounded-md p-1 outline-none"
+                      className="w-full rounded-md p-1 outline-none"
                       value={newItem.quantity}
                       onChange={(e) =>
                         setNewItem((prev) => ({
@@ -308,7 +353,12 @@ export default function BomList({
                     />
                     <p className="text-sm">QTY</p>
                   </div>
-                  <Button onClick={() => addItemToListHandler()}>Add</Button>
+                  <Button
+                    onClick={() => addItemToListHandler()}
+                    className="cursor-pointer text-white"
+                  >
+                    Add
+                  </Button>
                 </div>
                 {isBomNameAvailable && (
                   <p className="mt-1 text-sm text-red-500">
@@ -322,13 +372,13 @@ export default function BomList({
                   <table className="w-full">
                     <thead>
                       <tr className="text-[#797979]">
-                        <th className="text-start font-medium py-2 border px-2 ">
+                        <th className="border px-2 py-2 text-start font-medium">
                           Item Name
                         </th>
-                        <th className="text-end font-medium border px-2">
+                        <th className="border px-2 text-end font-medium">
                           Quantity
                         </th>
-                        <th className="text-end font-medium border px-2">
+                        <th className="border px-2 text-end font-medium">
                           Action
                         </th>
                       </tr>
@@ -336,13 +386,13 @@ export default function BomList({
                     <tbody>
                       {newItemList?.map((item) => (
                         <tr key={item.itemId}>
-                          <td className="text-start font-medium py-2 border px-2 ">
+                          <td className="border px-2 py-2 text-start font-medium">
                             {item.name}
                           </td>
-                          <td className="text-end font-medium border px-2">
+                          <td className="border px-2 text-end font-medium">
                             {item.quantity}
                           </td>
-                          <td className="place-items-end font-medium border px-2">
+                          <td className="place-items-end border px-2 font-medium">
                             <Trash
                               color="red"
                               size={20}
@@ -360,11 +410,17 @@ export default function BomList({
               )}
 
               <div className="flex w-full justify-end">
-                <Button onClick={onSubmit} disabled={isLoading}>
+                <Button
+                  onClick={onSubmit}
+                  disabled={isLoading}
+                  className="cursor-pointer text-white"
+                >
                   {isLoading ? (
                     <LoaderCircle size={24} className="animate-spin" />
-                  ) : (
+                  ) : formStatus === "New" ? (
                     "Create BOM"
+                  ) : (
+                    "Update BOM"
                   )}
                 </Button>
               </div>
@@ -373,14 +429,14 @@ export default function BomList({
         </Dialog>
       </div>
 
-      <section className="w-full px-20 mt-5">
+      <section className="mt-5 w-full px-20">
         <table className="w-full">
           <thead>
-            <tr className="text-[#797979] border">
-              <th className="text-center font-medium py-2  px-2 ">BOM Name</th>
-              <th className="text-center font-medium  px-2">Items count</th>
-              <th className="text-center font-medium  px-2">Image</th>
-              <th className="text-center font-medium  px-2">Action</th>
+            <tr className="border text-[#797979]">
+              <th className="px-2 py-2 text-center font-medium">BOM Name</th>
+              <th className="px-2 text-center font-medium">Items count</th>
+              <th className="px-2 text-center font-medium">Image</th>
+              <th className="px-2 text-center font-medium">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -393,15 +449,15 @@ export default function BomList({
                   setIsBomDetailsModalOpen(true),
                 ]}
               >
-                <td className="text-center  font-medium">{bom.name}</td>
-                <td className="text-center font-medium  px-2">
+                <td className="text-center font-medium">{bom.name}</td>
+                <td className="px-2 text-center font-medium">
                   {bom.Items?.length}
                 </td>
-                <td className=" py-1 place-items-center">
+                <td className="place-items-center py-1">
                   <img
                     src={bom.image}
                     alt="BOM Image"
-                    className="size-15 object-cover rounded-md"
+                    className="size-15 rounded-md object-cover"
                   />
                 </td>
                 <td className="place-items-center">
@@ -428,8 +484,8 @@ export default function BomList({
                   className="cursor-pointer"
                   onClick={() => [
                     setFormStatus("editing"),
-                    // setIsItemDetailsModalOpen(false),
-                    // setDataToEditDetails(selectedItem!),
+                    setIsBomDetailsModalOpen(false),
+                    setDataToEditDetails(selectedItem!),
                     setIsCreateModalOpen(true),
                   ]}
                 >
@@ -467,15 +523,15 @@ export default function BomList({
           <DialogDescription></DialogDescription>
           <table>
             <thead>
-              <tr className="text-[#797979] border ">
+              <tr className="border text-[#797979]">
                 <th className="font-medium">Item</th>
                 <th className="font-medium">Unit</th>
                 <th className="font-medium">QTY</th>
               </tr>
             </thead>
             <tbody>
-              {selectedItem?.Items?.map((item) => (
-                <tr key={item.itemId} className="border">
+              {selectedItem?.Items?.map((item, i) => (
+                <tr key={i} className="border">
                   <td className="text-center">{item.Items?.name}</td>
                   <td className="text-center">{item.Items?.unit}</td>
                   <td className="text-center">{item.quantity}</td>

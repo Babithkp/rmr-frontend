@@ -244,7 +244,6 @@ export default function Orders() {
     if (response?.status === 200) {
       setOrders(response.data.data);
       console.log(response.data.data);
-      
     } else {
       toast.error("Something went wrong");
     }
@@ -278,6 +277,7 @@ export default function Orders() {
     const isadmin = localStorage.getItem("isAdmin");
     if (isadmin === "true") {
       setIsAdmin(true);
+      getTodaysOrders();
     } else {
       const store = localStorage.getItem("store");
       if (store) {
@@ -286,7 +286,6 @@ export default function Orders() {
       }
     }
     setDatesInitialized(true);
-    getTodaysOrders();
   }, []);
 
   return (
@@ -484,7 +483,9 @@ export default function Orders() {
         <DialogContent className="min-w-6xl">
           <DialogHeader className="flex">
             <div className="flex items-start justify-between pr-10">
-              <DialogTitle className="text-primary">Order ID: {selectedOrder?.orderId}</DialogTitle>
+              <DialogTitle className="text-primary">
+                Order ID: {selectedOrder?.orderId}
+              </DialogTitle>
               <div className="flex gap-5">
                 <button className="cursor-pointer" onClick={editOrderHandler}>
                   <Pencil size={20} />

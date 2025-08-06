@@ -20,6 +20,7 @@ export default function OrderForm() {
   const [ordeItems, setOrdereItems] = useState<OrderItem[]>([]);
   const [storeId, setStoreId] = useState("");
   const [loading, setLoading] = useState(false);
+  
 
   const onSubmit = async () => {
     const hasValidQuantity = ordeItems.some((item) => item.quantity > 0);
@@ -119,9 +120,10 @@ export default function OrderForm() {
   async function getAllItems() {
     const response = await getAllItemsApi();
     if (response?.status === 200) {
-      setCategories(
-        response.data.data.map((item: ItemInputs) => item.category),
+      const uniqueCategories = Array.from(
+        new Set(response.data.data.map((item: ItemInputs) => item.category)),
       );
+      setCategories(uniqueCategories as never[]);
       const items = response.data.data.map((item: ItemInputs) => ({
         item: item,
         quantity: 0,

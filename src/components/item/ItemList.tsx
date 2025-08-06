@@ -52,8 +52,8 @@ export interface ItemInputs {
   name: string;
   price: number;
   GST: string;
-  netWeight: number;
-  grossWeight: number;
+  netWeight: number | string;
+  grossWeight: number | string;
   imageUrl: string;
   quantityUnit: number;
   unit: string;
@@ -202,7 +202,9 @@ export default function ItemList({
   async function getItemId() {
     const response = await getItemIdApi();
     if (response?.status === 200) {
-      setItemId("IM" + response.data.data);
+      if (formStatus === "New") {
+        setItemId("IM" + response.data.data);
+      }
     } else {
       toast.error("Something went wrong");
     }
@@ -218,6 +220,7 @@ export default function ItemList({
     getAllItems();
     getItemId();
   }, []);
+
   return (
     <>
       <div className="flex w-full gap-5 px-20">
@@ -331,7 +334,11 @@ export default function ItemList({
                     rules={{ required: true }}
                     render={({ field }) => (
                       <Select
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setValue("netWeight", "");
+                          setValue("grossWeight", "");
+                        }}
                         value={field.value}
                       >
                         <SelectTrigger
@@ -362,6 +369,10 @@ export default function ItemList({
                     type="text"
                     disabled={quantityType !== "Loose"}
                     className="border-primary rounded-md border p-1 py-2 pl-2"
+                    style={{
+                      backgroundColor:
+                        quantityType !== "Loose" ? "#F5F5F5" : "",
+                    }}
                     {...register("netWeight", {
                       required: quantityType === "Loose",
                     })}
@@ -379,6 +390,10 @@ export default function ItemList({
                   <input
                     type="text"
                     disabled={quantityType !== "Loose"}
+                    style={{
+                      backgroundColor:
+                        quantityType !== "Loose" ? "#F5F5F5" : "",
+                    }}
                     className="border-primary rounded-md border p-1 py-2 pl-2"
                     {...register("grossWeight", {
                       required: quantityType === "Loose",
