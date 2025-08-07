@@ -231,7 +231,7 @@ export default function BomList({
 
   return (
     <>
-      <div className="flex w-full gap-5 px-20">
+      <div className="flex w-full gap-5 ">
         <div className="flex w-full items-center gap-2 rounded-md border px-2">
           <Search className="text-slate-600" size={20} />
           <input
@@ -429,7 +429,7 @@ export default function BomList({
         </Dialog>
       </div>
 
-      <section className="mt-5 w-full px-20">
+      <section className="mt-5 w-full ">
         <table className="w-full">
           <thead>
             <tr className="border text-[#797979]">

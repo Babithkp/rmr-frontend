@@ -392,10 +392,10 @@ export default function ReceiptPage() {
   }, []);
 
   return (
-    <section className="w-full px-20">
+    <section className="w-full ">
       <div className="w-full p-2">
         <div className="flex items-center justify-between">
-          <p className="text-lg font-medium">Return</p>
+          <p className="text-lg font-medium">Reciepts</p>
           {isAdmin && (
             <Dialog
               open={isCreateModalOpen}

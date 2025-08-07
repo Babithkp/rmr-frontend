@@ -76,7 +76,7 @@ export const getClosingStockApi = async (storeId: string) => {
 export const getAllClosingStockApi = async () => {
   try {
     const response = await axios.get(
-      `${BASE_URL}/api/v1/store/closingStockByStoreId`
+      `${BASE_URL}/api/v1/store/closingStock`
     );
     return response;
   } catch (error) {
@@ -99,6 +99,22 @@ export const deleteClosingStockApi = async (id: string) => {
   try {
     const response = await axios.delete(
       `${BASE_URL}/api/v1/store/closingStock/${id}`
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
+export const getClosingStockByFromToDateApi = async (fromDate: Date, toDate: Date) => {
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/api/v1/store/closingStock/fromToDate`,
+      {
+        fromDate,
+        toDate,
+      }
     );
     return response;
   } catch (error) {

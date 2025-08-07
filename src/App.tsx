@@ -11,6 +11,7 @@ import OrderForm from "./components/order/OrderForm";
 import OrderUpdate from "./components/order/OrderUpdate";
 import ClosingStockForm from "./components/stock/ClosingStockForm";
 import Stocks from "./components/stock/Stocks";
+import ReturnPage from "./components/returns/ReturnPage";
 
 
 
@@ -27,6 +28,7 @@ function App() {
         <Route path="/inventory" element={<Item />} />
         <Route path="/receipt" element={<Receipt />} />
         <Route path="/order" element={<Orders />} />
+        <Route path="/order/returns" element={<ReturnPage />} />
         <Route path="/order-form" element={<OrderForm />} />
         <Route path="/order-form/:orderId" element={<OrderUpdate />} />
         <Route path="/report" element={<Report />} />

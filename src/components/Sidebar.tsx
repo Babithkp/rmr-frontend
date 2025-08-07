@@ -78,18 +78,18 @@ export default function Sidebar() {
           <a
             href="/Closing-stock"
             className={`flex cursor-pointer flex-col items-center gap-2 p-1 hover:bg-[#0000001A] ${
-              location.pathname === "/report" && "bg-[#0000001A]"
+              location.pathname === "/Closing-stock" && "bg-[#0000001A]"
             }`}
           >
             <BookA size={30} />
-            <p className="text-center">Report</p>
+            <p className="text-center">Cloasing Stock</p>
           </a>
         )}
         {!isAdmin && (
           <a
             href="/closing-stock-form"
             className={`flex cursor-pointer flex-col items-center gap-2 p-1 hover:bg-[#0000001A] ${
-              location.pathname === "/report" && "bg-[#0000001A]"
+              location.pathname === "/report"  && "bg-[#0000001A]"
             }`}
           >
             <BookA size={30} />

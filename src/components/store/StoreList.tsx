@@ -190,7 +190,7 @@ export default function StoreList() {
     getStoreId();
   }, []);
   return (
-    <section className="w-full px-20">
+    <section className="w-full ">
       <div className="flex gap-5">
         <div className="flex w-full items-center gap-2 rounded-md border px-2">
           <Search className="text-slate-600" size={20} />

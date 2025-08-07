@@ -29,6 +29,7 @@ import {
 
 import {
   ChevronDownIcon,
+  History,
   LoaderCircle,
   Pencil,
   Plus,
@@ -289,9 +290,9 @@ export default function Orders() {
   }, []);
 
   return (
-    <main className="flex w-full flex-col gap-5">
+    <main className="flex w-full flex-col gap-5 px-20">
       <Navbar />
-      <div className="flex w-full flex-col gap-3 rounded-2xl p-2 px-20">
+      <div className="flex w-full flex-col gap-3 rounded-2xl p-2">
         {isAdmin ? (
           <div className="flex w-full items-center justify-between">
             <Popover open={openFromDate} onOpenChange={setOpenFromDate}>
@@ -299,7 +300,7 @@ export default function Orders() {
                 <Button
                   variant="outline"
                   id="date"
-                  className="w-[29%] justify-between font-normal"
+                  className="w-100 justify-between font-normal"
                 >
                   {fromDate
                     ? fromDate.toLocaleString() // shows date + time
@@ -353,7 +354,7 @@ export default function Orders() {
                 <Button
                   variant="outline"
                   id="date"
-                  className="w-[30%] justify-between font-normal"
+                  className="w-100 justify-between font-normal"
                 >
                   {toDate ? toDate.toLocaleString() : "To Date & Time"}
                   <ChevronDownIcon />
@@ -402,7 +403,7 @@ export default function Orders() {
             </Popover>
 
             <Button
-              className="border-primary w-[20%] cursor-pointer"
+              className="border-primary w-60 cursor-pointer"
               variant={"outline"}
               onClick={filterOrders}
             >
@@ -413,20 +414,34 @@ export default function Orders() {
               )}
             </Button>
             <Button
-              className="w-[20%] cursor-pointer text-white"
+              className="border-primary w-60 cursor-pointer text-white"
               onClick={exportOrderSummaryToExcel}
             >
               Export
             </Button>
+            <Button
+              className="border-primary text-primary w-60 cursor-pointer"
+              onClick={() => navigate("/order/returns")}
+              variant={"outline"}
+            >
+              <History size={24} /> Return
+            </Button>
           </div>
         ) : (
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end gap-5">
             <Button
-              className="cursor-pointer text-white"
+              className="w-60 cursor-pointer text-white"
               onClick={() => navigate("/order-form")}
             >
               Create new
               <Plus size={20} />
+            </Button>
+            <Button
+              className="border-primary text-primary w-60 cursor-pointer"
+              onClick={() => navigate("/order/returns")}
+              variant={"outline"}
+            >
+              <History size={24} /> Return
             </Button>
           </div>
         )}

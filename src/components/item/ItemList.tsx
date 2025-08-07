@@ -223,7 +223,7 @@ export default function ItemList({
 
   return (
     <>
-      <div className="flex w-full gap-5 px-20">
+      <div className="flex w-full gap-5 ">
         <div className="flex w-full items-center gap-2 rounded-md border px-2">
           <Search className="text-slate-600" size={20} />
           <input
@@ -553,7 +553,7 @@ export default function ItemList({
           </DialogContent>
         </Dialog>
       </div>
-      <section className="w-full px-20">
+      <section className="w-full ">
         <table className="mt-5 h-full w-full">
           <thead>
             <tr className="border text-[#797979]">

@@ -33,7 +33,7 @@ export default function StockItems() {
   }, []);
 
   return (
-    <section className="px-20">
+    <section >
       <table className="w-full">
         <thead>
           <tr className="text-[#797979]">
