@@ -2,6 +2,7 @@ import LogoWhite from "@/assets/LogoWhite";
 import {
   Archive,
   BookA,
+  ClipboardMinus,
   LayoutDashboard,
   NotebookText,
   ReceiptText,
@@ -85,11 +86,22 @@ export default function Sidebar() {
             <p className="text-center">Cloasing Stock</p>
           </a>
         )}
+        {isAdmin && (
+          <a
+            href="/report"
+            className={`flex cursor-pointer flex-col items-center gap-2 p-1 hover:bg-[#0000001A] ${
+              location.pathname === "/report" && "bg-[#0000001A]"
+            }`}
+          >
+            <ClipboardMinus  size={30} />
+            <p className="text-center">Report</p>
+          </a>
+        )}
         {!isAdmin && (
           <a
             href="/closing-stock-form"
             className={`flex cursor-pointer flex-col items-center gap-2 p-1 hover:bg-[#0000001A] ${
-              location.pathname === "/report"  && "bg-[#0000001A]"
+              location.pathname === "/closing-stock-form"  && "bg-[#0000001A]"
             }`}
           >
             <BookA size={30} />

@@ -141,7 +141,10 @@ export default function OrderUpdate() {
       const response = await getOrderByIdApi(orderId);
       if (response?.status === 200) {
         const orders: Order = response.data.data;
-        setCategories(orders.Items.map((item) => item.Items.category));
+        const uniqueCategories = Array.from(
+          new Set(orders.Items.map((item) => item.Items.category)),
+        );
+        setCategories(uniqueCategories);
 
         const items: OrderItemUpdate[] = orders.Items.map((orderItem) => {
           const item = orderItem.Items as ItemInputs;
@@ -173,9 +176,9 @@ export default function OrderUpdate() {
   }, []);
 
   return (
-    <main className="flex w-full flex-col gap-5">
+    <main className="flex w-full flex-col gap-5 px-20">
       <Navbar />
-      <section className="flex gap-5 px-20">
+      <section className="flex gap-5 ">
         <div className="flex h-fit w-[15%] flex-col gap-2 rounded-lg border p-2">
           <p className="text-lg font-medium">Categories</p>
           <div className="flex flex-col gap-2">

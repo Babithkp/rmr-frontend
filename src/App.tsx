@@ -12,8 +12,7 @@ import OrderUpdate from "./components/order/OrderUpdate";
 import ClosingStockForm from "./components/stock/ClosingStockForm";
 import Stocks from "./components/stock/Stocks";
 import ReturnPage from "./components/returns/ReturnPage";
-
-
+import SaleReport from "./components/report/SaleReport";
 
 function App() {
   const location = useLocation();
@@ -32,9 +31,9 @@ function App() {
         <Route path="/order-form" element={<OrderForm />} />
         <Route path="/order-form/:orderId" element={<OrderUpdate />} />
         <Route path="/report" element={<Report />} />
+        <Route path="/report/sale-report" element={<SaleReport />} />
         <Route path="/closing-stock-form" element={<ClosingStockForm />} />
         <Route path="/closing-stock" element={<Stocks />} />
-
       </Routes>
     </>
   );

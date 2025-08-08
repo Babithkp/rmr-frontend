@@ -13,8 +13,6 @@ import { createClosingStockApi } from "@/api/store";
 import Navbar from "../Navbar";
 import { Calendar } from "@/components/ui/calendar";
 
-
-
 interface OrderItem {
   itemId: string;
   item: ItemInputs;
@@ -45,7 +43,13 @@ export default function ClosingStockForm() {
     if (response?.status === 200) {
       toast.success("Closing Stock created successfully");
       setOrdereItems(
-        ordeItems.map((item) => ({ ...item, quantity: 0, price: 0, full: 0, loose: 0 })),
+        ordeItems.map((item) => ({
+          ...item,
+          quantity: 0,
+          price: 0,
+          full: 0,
+          loose: 0,
+        })),
       );
     } else {
       toast.error("Something went wrong");
@@ -107,7 +111,7 @@ export default function ClosingStockForm() {
 
         return {
           ...orderItem,
-          quantity: total - CTwieght,
+          quantity: fullValue === 0 ? 0 : total - CTwieght,
           full: fullValue,
           loose: looseValue * 1000,
         };
@@ -147,9 +151,9 @@ export default function ClosingStockForm() {
   }, []);
 
   return (
-    <main className="flex w-full flex-col items-center gap-5">
+    <main className="flex w-full flex-col items-center gap-5 px-20">
       <Navbar />
-      <section className="flex w-full gap-5 px-20">
+      <section className="flex w-full gap-5">
         <div className="flex w-[20%] flex-col gap-2">
           <Popover open={openDate} onOpenChange={setOpenDate}>
             <PopoverTrigger asChild>

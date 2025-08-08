@@ -23,7 +23,12 @@ export default function Navbar() {
       }
     }
     const path = window.location.pathname.split("/")[2];
-    setPath(path ? path : window.location.pathname.split("/")[1]);
+    const pathname = window.location.pathname.split("/")[1]
+    if(pathname === "order-form"){
+      setPath("Order Form")
+    }else{
+      setPath(path ? path : window.location.pathname.split("/")[1]);
+    }
   }, []);
 
   return (
