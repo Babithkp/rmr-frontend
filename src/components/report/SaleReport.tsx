@@ -13,7 +13,6 @@ type ExcelRow = {
   "Sum of Quantity"?: number;
 };
 
-
 type Item = {
   name: string;
   unit: string;
@@ -216,6 +215,8 @@ export default function SaleReport() {
       toast.success("Sales data created successfully");
       setReport([]);
       setFile(null);
+    } else if (response?.status === 204) {
+      toast.warn("Sales already exists for today, please try again tomorrow");
     } else {
       toast.error("Something went wrong");
     }
@@ -238,7 +239,6 @@ export default function SaleReport() {
       const resultByStore = aggregateItemsByStore(newResult);
       setReport(resultByStore);
       console.log(resultByStore);
-      
     };
 
     reader.readAsArrayBuffer(file);

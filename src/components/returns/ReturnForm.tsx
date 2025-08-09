@@ -39,7 +39,7 @@ export default function ReturnForm() {
       toast.success("Returns created successfully");
       setReturnItem([]);
     } else if (response?.status === 204) {
-      toast.warn("Return already exists for today");
+      toast.warn("Return already exists for today, please try again tomorrow");
     } else {
       toast.error("Something went wrong");
     }

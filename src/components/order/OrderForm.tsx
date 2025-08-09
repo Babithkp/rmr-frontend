@@ -39,7 +39,7 @@ export default function OrderForm() {
           ordeItems.map((item) => ({ ...item, quantity: 0, price: 0 })),
         );
       } else if (response?.status === 204) {
-        toast.warn("Order already exists for today");
+        toast.warn("Order already exists for today, please try again tomorrow");
       } else {
         toast.error("Something went wrong");
       }
