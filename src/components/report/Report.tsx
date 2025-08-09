@@ -258,7 +258,7 @@ async function exportStockReport(
 
   // Header row
   const headerRow = sheet.getRow(rowIndex);
-  report.forEach((day, idx) => {
+  report.forEach((_day, idx) => {
     const startCol = idx * 6 + 1;
     if (idx === 0) {
       // First day: full headers
