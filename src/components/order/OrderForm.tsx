@@ -8,7 +8,7 @@ import { Button } from "../ui/button";
 import { formatter } from "@/lib/utils";
 import { createOrderApi } from "@/api/order";
 
-interface OrderItem {
+export interface OrderItem {
   item: ItemInputs;
   quantity: number;
   price: number;
@@ -20,7 +20,6 @@ export default function OrderForm() {
   const [ordeItems, setOrdereItems] = useState<OrderItem[]>([]);
   const [storeId, setStoreId] = useState("");
   const [loading, setLoading] = useState(false);
-  
 
   const onSubmit = async () => {
     const hasValidQuantity = ordeItems.some((item) => item.quantity > 0);
@@ -39,6 +38,8 @@ export default function OrderForm() {
         setOrdereItems(
           ordeItems.map((item) => ({ ...item, quantity: 0, price: 0 })),
         );
+      } else if (response?.status === 204) {
+        toast.warn("Order already exists for today");
       } else {
         toast.error("Something went wrong");
       }
@@ -94,17 +95,17 @@ export default function OrderForm() {
 
   const handleQuantityChange = (id: string, value: string) => {
     const parsed = parseInt(value, 10);
-  
+
     // Guard against invalid input
     if (isNaN(parsed) || parsed < 0) return;
-  
+
     const updatedItems = ordeItems.map((orderItem) => {
       if (orderItem.item.id === id) {
         const gst = parseFloat(orderItem.item.GST);
         const unitPriceWithGst =
           orderItem.item.price + (orderItem.item.price * gst) / 100;
         const totalPrice = parsed * unitPriceWithGst;
-  
+
         return {
           ...orderItem,
           quantity: parsed,
@@ -113,7 +114,7 @@ export default function OrderForm() {
       }
       return orderItem;
     });
-  
+
     setOrdereItems(updatedItems);
   };
 
@@ -260,9 +261,18 @@ export default function OrderForm() {
           <div className="grid gap-2">
             <div className="flex justify-between font-bold">
               <p>Total(₹)</p>
-              <p>₹{ordeItems.reduce((acc, item) => acc + item.price, 0).toFixed(2)}</p>
+              <p>
+                ₹
+                {ordeItems
+                  .reduce((acc, item) => acc + item.price, 0)
+                  .toFixed(2)}
+              </p>
             </div>
-            <Button className="w-full text-white" onClick={onSubmit} disabled={loading}>
+            <Button
+              className="w-full text-white"
+              onClick={onSubmit}
+              disabled={loading}
+            >
               {loading ? (
                 <LoaderCircle size={24} className="animate-spin" />
               ) : (

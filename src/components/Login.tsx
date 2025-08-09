@@ -26,6 +26,7 @@ export default function Login() {
     const response = await adminLoginApi(userName, password);
     if (response?.status === 200) {
       toast.success("Login Successful");
+      localStorage.clear()
       localStorage.setItem("isAdmin", "true");
       router("/home");
     } else if (response?.status === 202) {

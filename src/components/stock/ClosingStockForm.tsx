@@ -107,7 +107,10 @@ export default function ClosingStockForm() {
         const netWieght = orderItem.item.netWeight as number;
         const grosswieght = orderItem.item.grossWeight as number;
 
-        const CTwieght = netWieght - grosswieght;
+        let CTwieght = 0;
+        if (looseValue !== 0) {
+          CTwieght = netWieght - grosswieght;
+        }
 
         return {
           ...orderItem,
@@ -334,7 +337,7 @@ export default function ClosingStockForm() {
             {loading ? (
               <LoaderCircle size={24} className="animate-spin" />
             ) : (
-              "Place Order"
+              "Submit"
             )}
           </Button>
         </div>

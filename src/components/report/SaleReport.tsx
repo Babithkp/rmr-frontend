@@ -6,19 +6,13 @@ import * as XLSX from "xlsx";
 import { getAllStoresApi } from "@/api/store";
 import { toast } from "react-toastify";
 import { createSalesDataApi } from "@/api/sales";
+import { getAllBomsApi } from "@/api/item";
 
 type ExcelRow = {
   "Row Labels": string;
   "Sum of Quantity"?: number;
 };
 
-type StoreItem = { name: string; quantity: number };
-type StoreGroup = {
-  storeId: string | null;
-  storename: string;
-  total: number;
-  Items: StoreItem[];
-};
 
 type Item = {
   name: string;
@@ -38,9 +32,120 @@ type StoreData = {
   BOM: BOMEntry[];
 };
 
+type BOMItem = {
+  Items: {
+    name: string;
+    unit: string;
+  };
+  quantity: number;
+};
+
+type ProductBOM = {
+  id: string;
+  name: string;
+  Items: BOMItem[];
+};
+
+type FinalBOMItem = {
+  name: string;
+  unit: string;
+  quantity: number;
+};
+
+type StoreResult = {
+  storeId: string;
+  storeName: string;
+  BOM: {
+    name: string;
+    quantity: number;
+    Items: FinalBOMItem[];
+  }[];
+};
+
+type BOMUsage = {
+  name: string;
+  quantity: number;
+};
+
+type StoreBOM = {
+  storeId: string | null;
+  storename: string;
+  total: number;
+  BOM: BOMUsage[];
+};
+
+type AggregatedItem = {
+  name: string;
+  unit: string;
+  quantity: number;
+};
+
+type AggregatedStore = {
+  storeName: string;
+  items: AggregatedItem[];
+};
+
 interface StoreNameObj {
   storeId: string;
   storeName: string;
+}
+
+function calculateItems(bom: ProductBOM, bomQty: number): FinalBOMItem[] {
+  return bom.Items.map((item) => ({
+    name: item.Items.name,
+    unit: item.Items.unit,
+    quantity: item.quantity * bomQty,
+  }));
+}
+
+function generateDetailedBOMPerStore(
+  storeBOMs: StoreBOM[],
+  productBOMs: ProductBOM[],
+): StoreResult[] {
+  return storeBOMs.map((store) => {
+    const detailedBOM = store.BOM.map((bomUsage) => {
+      const bom = productBOMs.find(
+        (p) =>
+          p.name.toLowerCase().trim() === bomUsage.name.toLowerCase().trim(),
+      );
+
+      if (!bom) return null;
+
+      return {
+        name: bom.name,
+        quantity: bomUsage.quantity,
+        Items: calculateItems(bom, bomUsage.quantity),
+      };
+    }).filter(Boolean) as StoreResult["BOM"];
+
+    return {
+      storeId: store.storeId!,
+      storeName: store.storename,
+      BOM: detailedBOM,
+    };
+  });
+}
+function aggregateItemsByStore(data: StoreResult[]): AggregatedStore[] {
+  return data.map((store) => {
+    const itemMap = new Map<string, AggregatedItem>();
+
+    store.BOM.forEach((bom) => {
+      bom.Items.forEach((item) => {
+        const key = `${item.name}|${item.unit}`;
+        if (itemMap.has(key)) {
+          itemMap.get(key)!.quantity += item.quantity;
+        } else {
+          itemMap.set(key, { ...item });
+        }
+      });
+    });
+
+    return {
+      storeId: store.storeId,
+      storeName: store.storeName,
+      items: Array.from(itemMap.values()),
+    };
+  });
 }
 
 function normalize(str: string): string {
@@ -50,11 +155,11 @@ function normalize(str: string): string {
 function convertExcelDataToStoreWiseJson(
   data: ExcelRow[],
   storeNames: StoreNameObj[],
-): StoreGroup[] {
+): StoreBOM[] {
   const normalizedStoreNames = storeNames.map((s) => normalize(s.storeName));
 
-  const result: StoreGroup[] = [];
-  let currentStore: StoreGroup | null = null;
+  const result: StoreBOM[] = [];
+  let currentStore: StoreBOM | null = null;
 
   for (const row of data) {
     const nameRaw = row["Row Labels"];
@@ -64,17 +169,18 @@ function convertExcelDataToStoreWiseJson(
 
     if (normalizedStoreNames.includes(normalizedName)) {
       if (currentStore) result.push(currentStore);
+
       const storeObj = storeNames.find(
         (s) => normalize(s.storeName) === normalizedName,
       );
       currentStore = {
-        storeId: storeObj?.storeId || null,
+        storeId: storeObj?.storeId || "",
         storename: nameRaw,
         total: qty,
-        Items: [],
+        BOM: [],
       };
     } else if (currentStore) {
-      currentStore.Items.push({ name: nameRaw, quantity: qty });
+      currentStore.BOM.push({ name: nameRaw, quantity: qty });
     }
   }
 
@@ -90,8 +196,9 @@ export default function SaleReport() {
       storeName: string;
     }[]
   >([]);
-  const [report, setReport] = useState<StoreGroup[]>([]);
+  const [report, setReport] = useState<AggregatedStore[]>([]);
   const [loading, setLoading] = useState(false);
+  const [bom, setBom] = useState<ProductBOM[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const onSumbit = async () => {
@@ -127,7 +234,11 @@ export default function SaleReport() {
       const sheet = workbook.Sheets[sheetName];
       const jsonData: ExcelRow[] = XLSX.utils.sheet_to_json(sheet);
       const result = convertExcelDataToStoreWiseJson(jsonData, storeNames);
-      setReport(result);
+      const newResult = generateDetailedBOMPerStore(result, bom);
+      const resultByStore = aggregateItemsByStore(newResult);
+      setReport(resultByStore);
+      console.log(resultByStore);
+      
     };
 
     reader.readAsArrayBuffer(file);
@@ -137,11 +248,21 @@ export default function SaleReport() {
     const response = await getAllStoresApi();
     if (response?.status === 200) {
       setStoreNames(
-        response.data.data.map((store: StoreData) => ({
-          storeId: store.id,
-          storeName: store.storeName,
-        })),
+        response.data.data.map((store: StoreData) => {
+          return {
+            storeId: store.id,
+            storeName: store.storeName,
+          };
+        }),
       );
+    } else {
+      toast.error("Something went wrong");
+    }
+  }
+  async function getAllBoms() {
+    const response = await getAllBomsApi();
+    if (response?.status === 200) {
+      setBom(response.data.data);
     } else {
       toast.error("Something went wrong");
     }
@@ -149,6 +270,7 @@ export default function SaleReport() {
 
   useEffect(() => {
     getAllStores();
+    getAllBoms();
   }, []);
 
   return (
@@ -186,12 +308,14 @@ export default function SaleReport() {
               {report.map((store, i) => (
                 <tr key={i}>
                   <td className="border px-2 py-1 text-start font-medium">
-                    {store.storename}
+                    {store.storeName}
                   </td>
                   <td className="border px-2 py-1 text-start font-medium">
-                    {store.Items.map((item, i) => (
-                      <div key={i}>
-                        {item.name} - {item.quantity}
+                    {store.items.map((item, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <p>{item.name}</p>
+                        <p>{item.quantity}</p>
+                        <p>{item.unit}</p>
                       </div>
                     ))}
                   </td>

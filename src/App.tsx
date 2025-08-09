@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router";
+import { Routes, Route, useLocation, useNavigate } from "react-router";
 import Home from "./components/home/Home";
 import Login from "./components/Login";
 import Store from "./components/store/Store";
@@ -13,10 +13,21 @@ import ClosingStockForm from "./components/stock/ClosingStockForm";
 import Stocks from "./components/stock/Stocks";
 import ReturnPage from "./components/returns/ReturnPage";
 import SaleReport from "./components/report/SaleReport";
+import { useEffect } from "react";
 
 function App() {
   const location = useLocation();
-  console.log(location.pathname);
+  const nagivate = useNavigate();
+
+
+  useEffect(()=>{
+    const isAdmin = localStorage.getItem("isAdmin");
+    if(location.pathname !== "/" && !isAdmin){
+      nagivate("/");
+    }
+  },[location.pathname])
+
+  
   return (
     <>
       {location.pathname !== "/" && <Sidebar />}

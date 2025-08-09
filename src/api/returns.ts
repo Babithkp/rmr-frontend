@@ -14,16 +14,16 @@ export const createReturnsApi = async (data: unknown, storeId: string) => {
   }
 };
 
-
 export const getReturnsByStoreIdApi = async (storeId: string) => {
   try {
-    const response = await axios.get(`${BASE_URL}/api/v1/returns/get/${storeId}`);
+    const response = await axios.get(
+      `${BASE_URL}/api/v1/returns/get/${storeId}`,
+    );
     return response;
   } catch (error) {
     console.log(error);
   }
 };
-
 
 export const getAllReturnsApi = async () => {
   try {
@@ -33,7 +33,6 @@ export const getAllReturnsApi = async () => {
     console.log(error);
   }
 };
-
 
 export const approveReturnApi = async (returnId: string) => {
   try {
@@ -50,6 +49,25 @@ export const declineReturnApi = async (returnId: string) => {
   try {
     const response = await axios.post(
       `${BASE_URL}/api/v1/returns/decline/${returnId}`,
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getReturnsByFromToDateApi = async (
+  storeId: string,
+  fromDate: unknown,
+  toDate: unknown,
+) => {
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/api/v1/returns/fromToDate/${storeId}`,
+      {
+        fromDate,
+        toDate,
+      },
     );
     return response;
   } catch (error) {

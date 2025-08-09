@@ -11,10 +11,18 @@ export const createSalesDataApi = async (data: unknown) => {
   }
 };
 
-export const getSalesDataForStoreApi = async (storeId: string) => {
+export const getSalesDataForStoreApi = async (
+  storeId: string,
+  fromDate: Date,
+  toDate: Date,
+) => {
   try {
-    const response = await axios.get(
-      `${BASE_URL}/api/v1/sales/get/${storeId}`
+    const response = await axios.post(
+      `${BASE_URL}/api/v1/sales/get/${storeId}`,
+      {
+        fromDate,
+        toDate,
+      },
     );
     return response;
   } catch (error) {

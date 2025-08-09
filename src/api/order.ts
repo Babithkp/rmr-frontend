@@ -78,3 +78,22 @@ export const getOrdersByFromToDateApi = async (
     console.log(error);
   }
 };
+
+export const getOrdersByStoreDateApi = async (
+  storeId: string,
+  fromDate: unknown,
+  toDate: unknown,
+) => {
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/api/v1/order/storeDate/${storeId}`,
+      {
+        fromDate,
+        toDate,
+      },
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};

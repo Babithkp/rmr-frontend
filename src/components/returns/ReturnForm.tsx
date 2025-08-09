@@ -13,7 +13,7 @@ import { getAllItemsApi } from "@/api/item";
 import { LoaderCircle, Minus, Plus, Trash } from "lucide-react";
 import { createReturnsApi } from "@/api/returns";
 
-interface ReturnItem {
+export interface ReturnItem {
   itemId: string;
   name: string;
   quantity: number;
@@ -38,6 +38,8 @@ export default function ReturnForm() {
     if (response?.status === 200) {
       toast.success("Returns created successfully");
       setReturnItem([]);
+    } else if (response?.status === 204) {
+      toast.warn("Return already exists for today");
     } else {
       toast.error("Something went wrong");
     }
