@@ -60,12 +60,13 @@ export default function StoreList() {
   const [isStoreAvailable, setIsStoreNameAvailable] = useState(false);
   const [isloading, setIsloading] = useState(false);
   const [stores, setStores] = useState<StoreInputs[]>([]);
+  const [filteredItem, setFilteredItem] = useState<StoreInputs[]>([]);
   const [selectedStore, setSelectedStore] = useState<StoreInputs | null>(null);
-  // const [dataToEditDetails, setDataToEditDetails] = useState<StoreInputs>();
   const [showPassword, setShowPassword] = useState(false);
   const imageRef = useRef<HTMLInputElement>(null);
   const [image, setImage] = useState<File | null | string>(null);
   const [storeId, setStoreId] = useState<string>("");
+  const [search, setSearch] = useState("");
 
   const {
     register,
@@ -74,6 +75,40 @@ export default function StoreList() {
     setValue,
     formState: { errors },
   } = useForm<StoreInputs>();
+
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      const text = search.trim().toLowerCase();
+
+      if (!text) {
+        setFilteredItem(stores);
+        return;
+      }
+
+      const filtered = stores.filter((item) => {
+        const fieldsToSearch: (string | number | undefined | null)[] = [
+          item.storeName,
+          item.storeId,
+          item.storeManager,
+          item.location,
+        ];
+
+        return fieldsToSearch.some((field) => {
+          if (typeof field === "string") {
+            return field.toLowerCase().includes(text);
+          }
+          if (typeof field === "number") {
+            return field.toString().includes(text);
+          }
+          return false;
+        });
+      });
+
+      setFilteredItem(filtered);
+    }, 300);
+
+    return () => clearTimeout(delay);
+  }, [search, stores]);
 
   const deleteStoreHandler = async () => {
     if (selectedStore?.id) {
@@ -121,7 +156,7 @@ export default function StoreList() {
         toast.success("Branch created successfully");
         setIsCreateModalOpen(false);
         getAllStores();
-        getStoreId()
+        getStoreId();
         reset();
         setImage(null);
       } else if (response?.status === 204) {
@@ -165,6 +200,7 @@ export default function StoreList() {
     const response = await getAllStoresApi();
     if (response?.status === 200) {
       setStores(response.data.data);
+      setFilteredItem(response.data.data);
     } else {
       toast.error("Something went wrong");
     }
@@ -190,14 +226,16 @@ export default function StoreList() {
     getStoreId();
   }, []);
   return (
-    <section className="w-full ">
-      <div className="flex gap-5">
-        <div className="flex w-full items-center gap-2 rounded-md border px-2">
+    <section className="w-full">
+      <div className="flex w-full gap-5">
+        <div className="flex w-[90%] items-center gap-2 rounded-md border px-2">
           <Search className="text-slate-600" size={20} />
           <input
             type="text"
             className="w-full outline-none"
             placeholder="Store"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
@@ -208,7 +246,7 @@ export default function StoreList() {
             Create new
             <Plus size={20} />
           </DialogTrigger>
-          <DialogContent className="min-w-6xl">
+          <DialogContent className="min-w-6xl max-lg:min-w-2xl">
             <DialogHeader>
               <DialogTitle className="text-primary">
                 {formStatus == "New" ? "Create Store" : "Edit Store"}
@@ -220,7 +258,7 @@ export default function StoreList() {
               onSubmit={handleSubmit(onSubmit)}
             >
               <div
-                className="flex h-35 w-[15%] cursor-pointer flex-col items-center justify-center rounded-md border border-dashed text-sm text-slate-600"
+                className="flex h-35 w-[15%] cursor-pointer flex-col items-center justify-center rounded-md border border-dashed text-sm text-slate-600 max-lg:w-[30%]"
                 onClick={() => imageRef.current?.click()}
               >
                 <input
@@ -248,7 +286,7 @@ export default function StoreList() {
                   />
                 )}
               </div>
-              <div className="h-fit w-[40%]">
+              <div className="h-fit w-[40%] max-lg:w-[60%]">
                 <div className="flex w-full flex-col gap-2">
                   <label>Store ID</label>
                   <input
@@ -274,7 +312,7 @@ export default function StoreList() {
                   </p>
                 )}
               </div>
-              <div className="w-[40%]">
+              <div className="w-[40%] max-lg:w-[48%]">
                 <div className="flex w-full flex-col gap-2">
                   <label>Store Name</label>
                   <input
@@ -292,7 +330,7 @@ export default function StoreList() {
                   </p>
                 )}
               </div>
-              <div className="w-[30%]">
+              <div className="w-[30%] max-lg:w-[48%]">
                 <div className="flex w-full flex-col gap-2">
                   <label>Store Location</label>
                   <input
@@ -310,7 +348,7 @@ export default function StoreList() {
                 )}
               </div>
 
-              <div className="w-[30%]">
+              <div className="w-[30%] max-lg:w-[48%]">
                 <div className="flex w-full flex-col gap-2">
                   <label>Owner Name</label>
                   <input
@@ -325,7 +363,7 @@ export default function StoreList() {
                   </p>
                 )}
               </div>
-              <div className="w-[30%]">
+              <div className="w-[30%] max-lg:w-[48%]">
                 <div className="flex w-full flex-col gap-2">
                   <label>Conatct Number</label>
                   <input
@@ -354,7 +392,7 @@ export default function StoreList() {
                   </p>
                 )}
               </div>
-              <div className="w-[49%]">
+              <div className="w-[49%] max-lg:w-[48%]">
                 <div className="flex w-full flex-col gap-2">
                   <label>Username</label>
                   <input
@@ -369,7 +407,7 @@ export default function StoreList() {
                   </p>
                 )}
               </div>
-              <div className="w-[49%]">
+              <div className="w-[49%] max-lg:w-[48%]">
                 <div className="flex w-full flex-col gap-2">
                   <label>Password</label>
                   <input
@@ -415,7 +453,7 @@ export default function StoreList() {
           </tr>
         </thead>
         <tbody>
-          {stores.map((store) => (
+          {filteredItem.map((store) => (
             <tr
               key={store.id}
               className="hover:bg-accent cursor-pointer border"
@@ -438,7 +476,7 @@ export default function StoreList() {
         onOpenChange={setIsStoreDetailsModalOpen}
       >
         <DialogTrigger className="hidden"></DialogTrigger>
-        <DialogContent className="min-w-6xl">
+        <DialogContent className="min-w-6xl max-lg:min-w-2xl">
           <DialogHeader className="flex">
             <div className="flex items-start justify-between pr-10">
               <DialogTitle className="text-primary">
@@ -486,13 +524,15 @@ export default function StoreList() {
             </div>
           </DialogHeader>
           <DialogDescription></DialogDescription>
-          <div className="grid grid-cols-3 gap-5">
+          <div className="grid grid-cols-3 gap-5 max-lg:grid-cols-2">
             <div className="flex items-center gap-5">
-              <img
-                src={selectedStore?.image}
-                alt="Store Image"
-                className="size-30 rounded-md"
-              />
+              {selectedStore?.image && (
+                <img
+                  src={selectedStore?.image}
+                  alt="Store Image"
+                  className="size-30 rounded-md"
+                />
+              )}
             </div>
             <div className="flex items-end gap-5">
               <label className="font-medium">Store ID</label>
@@ -510,7 +550,7 @@ export default function StoreList() {
               <label className="font-medium">Owner</label>
               <p>{selectedStore?.storeManager}</p>
             </div>
-            <div className="col-span-2 flex items-center gap-5">
+            <div className="col-span-2 flex items-center gap-5 max-lg:col-span-1">
               <label className="font-medium">Conatct Number</label>
               <p>{selectedStore?.contactNumber}</p>
             </div>
@@ -519,7 +559,7 @@ export default function StoreList() {
               <label className="font-medium">Username</label>
               <p>{selectedStore?.username}</p>
             </div>
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-5 max-lg:col-span-2">
               <label className="font-medium">Password</label>
               <input
                 value={selectedStore?.password}

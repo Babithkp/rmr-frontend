@@ -252,7 +252,7 @@ export default function ItemList({
             Create item
             <Plus size={20} />
           </DialogTrigger>
-          <DialogContent className="min-w-5xl">
+          <DialogContent className="min-w-5xl max-lg:min-w-2xl">
             <DialogHeader>
               <DialogTitle>
                 {formStatus == "New" ? "Create Store" : "Edit Store"}
@@ -409,7 +409,7 @@ export default function ItemList({
 
               <div className="flex w-full gap-5">
                 <button
-                  className="border-primary grid w-[30%] gap-2 rounded-lg border border-dashed text-xs text-slate-500"
+                  className="border-primary grid w-[40%] gap-2 rounded-lg border border-dashed text-xs text-slate-500 "
                   onClick={() => imageRef.current?.click()}
                   type="button"
                 >
@@ -438,8 +438,8 @@ export default function ItemList({
                     />
                   )}
                 </button>
-                <div className="flex w-full flex-wrap justify-between gap-5">
-                  <div className="w-[48%]">
+                <div className="flex  flex-wrap justify-between gap-5 max-lg:w-[60%]">
+                  <div className="w-full ">
                     <div className="flex w-full flex-col gap-2">
                       <label>Quantity / unit</label>
                       <input
@@ -456,7 +456,7 @@ export default function ItemList({
                       </p>
                     )}
                   </div>
-                  <div className="w-[48%]">
+                  <div className="w-full">
                     <div className="flex w-full flex-col gap-2">
                       <label>unit</label>
                       <input
@@ -473,7 +473,7 @@ export default function ItemList({
                       </p>
                     )}
                   </div>
-                  <div className="w-[48%]">
+                  <div className="w-full">
                     <div className="flex w-full flex-col gap-2">
                       <label>Item Category</label>
                       <Controller
@@ -516,7 +516,7 @@ export default function ItemList({
                     )}
                   </div>
 
-                  <div className="w-[48%]">
+                  <div className="w-full">
                     <div className="flex w-full flex-col gap-2">
                       <label>GST</label>
                       <input
@@ -589,7 +589,7 @@ export default function ItemList({
         onOpenChange={setIsItemDetailsModalOpen}
       >
         <DialogTrigger className="hidden"></DialogTrigger>
-        <DialogContent className="min-w-6xl">
+        <DialogContent className="min-w-6xl max-lg:min-w-2xl">
           <DialogHeader className="flex">
             <div className="flex items-start justify-between pr-10">
               <DialogTitle className="text-primary">
@@ -637,7 +637,7 @@ export default function ItemList({
             </div>
           </DialogHeader>
           <DialogDescription></DialogDescription>
-          <div className="grid grid-cols-3 gap-5">
+          <div className="grid grid-cols-3 gap-5 max-lg:grid-cols-2">
             <div className="flex items-end gap-5">
               <label className="font-medium">Item ID</label>
               <p className="font-light">{selectedItem?.itemId}</p>

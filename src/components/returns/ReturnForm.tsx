@@ -135,7 +135,9 @@ export default function ReturnForm() {
           </SelectTrigger>
           <SelectContent>
             {item.map((item) => (
-              <SelectItem value={item.name}>{item.name}</SelectItem>
+              <SelectItem value={item.name} key={item.name}>
+                {item.name}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -188,7 +190,7 @@ export default function ReturnForm() {
                     </div>
                   </td>
                   <td className="text-center">{item.price * item.quantity}</td>
-                  <td className="w-100">
+                  <td className="w-[30%]">
                     <input
                       className="w-full outline-none"
                       type="text"

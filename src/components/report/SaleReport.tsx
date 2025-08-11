@@ -201,7 +201,7 @@ export default function SaleReport() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const onSumbit = async () => {
-    if (report.length === 0) {
+    if (report.length === 0 || report[0].items.length === 0) {
       toast.warn("Please upload data");
       return;
     }
@@ -238,11 +238,11 @@ export default function SaleReport() {
       const newResult = generateDetailedBOMPerStore(result, bom);
       const resultByStore = aggregateItemsByStore(newResult);
       setReport(resultByStore);
-      console.log(resultByStore);
+      // console.log(newResult);
     };
 
     reader.readAsArrayBuffer(file);
-  }, [file, storeNames]);
+  }, [file, storeNames,bom]);
 
   async function getAllStores() {
     const response = await getAllStoresApi();
@@ -274,7 +274,7 @@ export default function SaleReport() {
   }, []);
 
   return (
-    <main className="flex w-full flex-col gap-5 px-20">
+    <main className="flex w-full flex-col gap-5 px-20 max-lg:px-5">
       <Navbar />
       <button
         className="flex h-[20vh] cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[#FF71A2] bg-[#FFECF3] text-[#FF71A2]"

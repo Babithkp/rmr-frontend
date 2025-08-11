@@ -14,20 +14,32 @@ import Stocks from "./components/stock/Stocks";
 import ReturnPage from "./components/returns/ReturnPage";
 import SaleReport from "./components/report/SaleReport";
 import { useEffect } from "react";
+import ErrorPage from "./ErrorPage";
 
 function App() {
   const location = useLocation();
   const nagivate = useNavigate();
 
-
-  useEffect(()=>{
+  useEffect(() => {    
     const isAdmin = localStorage.getItem("isAdmin");
-    if(location.pathname !== "/" && !isAdmin){
+    if (location.pathname !== "/" && !isAdmin) {
       nagivate("/");
+    } else if (isAdmin === "true") {
+      if (location.pathname === "/closing-stock-form") {
+        nagivate("/");
+      }
+    } else if (isAdmin === "false") {
+      if (
+        location.pathname === "/store" ||
+        location.pathname === "/inventory" ||
+        location.pathname === "/Closing-stock" ||
+        location.pathname === "/report"
+      ) {
+        nagivate("/home");
+      }
     }
-  },[location.pathname])
+  }, [location.pathname,nagivate]);
 
-  
   return (
     <>
       {location.pathname !== "/" && <Sidebar />}
@@ -38,13 +50,14 @@ function App() {
         <Route path="/inventory" element={<Item />} />
         <Route path="/receipt" element={<Receipt />} />
         <Route path="/order" element={<Orders />} />
-        <Route path="/order/returns" element={<ReturnPage />} />
+        <Route path="/returns" element={<ReturnPage />} />
         <Route path="/order-form" element={<OrderForm />} />
         <Route path="/order-form/:orderId" element={<OrderUpdate />} />
         <Route path="/report" element={<Report />} />
         <Route path="/report/sale-report" element={<SaleReport />} />
         <Route path="/closing-stock-form" element={<ClosingStockForm />} />
         <Route path="/closing-stock" element={<Stocks />} />
+        <Route path="*" element={<ErrorPage />} />
       </Routes>
     </>
   );

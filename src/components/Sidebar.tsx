@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   NotebookText,
   ReceiptText,
+  SquareArrowLeft,
   Store,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -23,7 +24,7 @@ export default function Sidebar() {
   }, []);
 
   return (
-    <nav className="bg-primary flex flex-col items-center gap-20 py-10 text-[10px] text-white">
+    <nav className="bg-primary flex flex-col items-center gap-20 py-10 text-[10px] text-white h-full">
       <LogoWhite />
       <div className="flex flex-col gap-5">
         <a
@@ -93,7 +94,7 @@ export default function Sidebar() {
               location.pathname === "/report" && "bg-[#0000001A]"
             }`}
           >
-            <ClipboardMinus  size={30} />
+            <ClipboardMinus size={30} />
             <p className="text-center">Report</p>
           </a>
         )}
@@ -101,13 +102,24 @@ export default function Sidebar() {
           <a
             href="/closing-stock-form"
             className={`flex cursor-pointer flex-col items-center gap-2 p-1 hover:bg-[#0000001A] ${
-              location.pathname === "/closing-stock-form"  && "bg-[#0000001A]"
+              location.pathname === "/closing-stock-form" && "bg-[#0000001A]"
             }`}
           >
             <BookA size={30} />
             <p className="text-center">Closing Stock</p>
           </a>
         )}
+        {
+          <a
+            href="/returns"
+            className={`flex cursor-pointer flex-col items-center gap-2 p-1 hover:bg-[#0000001A] ${
+              location.pathname === "/returns" && "bg-[#0000001A]"
+            }`}
+          >
+            <SquareArrowLeft  size={30} />
+            <p className="text-center">Return</p>
+          </a>
+        }
       </div>
     </nav>
   );

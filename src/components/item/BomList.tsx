@@ -231,7 +231,7 @@ export default function BomList({
 
   return (
     <>
-      <div className="flex w-full gap-5 ">
+      <div className="flex w-full gap-5">
         <div className="flex w-full items-center gap-2 rounded-md border px-2">
           <Search className="text-slate-600" size={20} />
           <input
@@ -429,7 +429,7 @@ export default function BomList({
         </Dialog>
       </div>
 
-      <section className="mt-5 w-full ">
+      <section className="mt-5 w-full">
         <table className="w-full">
           <thead>
             <tr className="border text-[#797979]">
@@ -454,11 +454,13 @@ export default function BomList({
                   {bom.Items?.length}
                 </td>
                 <td className="place-items-center py-1">
-                  <img
-                    src={bom.image}
-                    alt="BOM Image"
-                    className="size-15 rounded-md object-cover"
-                  />
+                  {bom.image && (
+                    <img
+                      src={bom.image}
+                      alt="BOM Image"
+                      className="size-15 rounded-md object-cover"
+                    />
+                  )}
                 </td>
                 <td className="place-items-center">
                   <Eye />

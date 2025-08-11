@@ -401,18 +401,18 @@ export default function ReceiptPage() {
               open={isCreateModalOpen}
               onOpenChange={setIsCreateModalOpen}
             >
-              <DialogTrigger className="border-primary text-primary flex cursor-pointer items-center gap-2 rounded-md border p-2 px-3 text-sm whitespace-nowrap">
+              <DialogTrigger className="border-primary text-primary flex cursor-pointer items-center gap-2 rounded-md border p-2 px-3 text-sm whitespace-nowrap" onClick={()=>setTableData([])}>
                 <Plus size={20} />
                 Create new
               </DialogTrigger>
-              <DialogContent className="min-w-5xl">
+              <DialogContent className="min-w-5xl overflow-x-auto max-lg:min-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Create Receipt</DialogTitle>
                 </DialogHeader>
                 <DialogDescription></DialogDescription>
-                <div className="flex max-h-[80vh] flex-col gap-5 overflow-y-auto">
+                <div className="flex max-h-[80vh] flex-col gap-5 overflow-auto">
                   {tableData.length === 0 && (
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-3 justify-end">
                       <p>Upload Order Form</p>
 
                       <div
@@ -458,8 +458,8 @@ export default function ReceiptPage() {
                           ))}
                         </tbody>
                       </table>
-                      <div className="flex justify-end">
-                        <Button className="text-white" onClick={onSubmitTable}>
+                      <div className="flex justify-start w-full  ">
+                        <Button className="text-white" onClick={onSubmitTable} >
                           {loading ? (
                             <LoaderCircle size={24} className="animate-spin" />
                           ) : (
@@ -519,7 +519,7 @@ export default function ReceiptPage() {
       </div>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger className="hidden"></DialogTrigger>
-        <DialogContent className="min-w-6xl">
+        <DialogContent className="min-w-6xl max-lg:min-w-2xl">
           <DialogHeader className="flex">
             {isAdmin && selectedReceipt?.status !== "Approved" && (
               <div className="flex items-start justify-between pr-10">

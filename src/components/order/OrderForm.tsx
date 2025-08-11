@@ -94,7 +94,7 @@ export default function OrderForm() {
   };
 
   const handleQuantityChange = (id: string, value: string) => {
-    const parsed = parseInt(value, 10);
+    const parsed = parseFloat(value);
 
     // Guard against invalid input
     if (isNaN(parsed) || parsed < 0) return;
@@ -124,7 +124,10 @@ export default function OrderForm() {
       const uniqueCategories = Array.from(
         new Set(response.data.data.map((item: ItemInputs) => item.category)),
       );
-      setCategories(uniqueCategories as never[]);
+      if (uniqueCategories) {
+        setCategories(uniqueCategories as never[]);
+      }
+      setVisibleCategories(uniqueCategories[0] as never);
       const items = response.data.data.map((item: ItemInputs) => ({
         item: item,
         quantity: 0,
@@ -144,9 +147,9 @@ export default function OrderForm() {
   }, []);
 
   return (
-    <main className="flex w-full flex-col gap-5">
+    <main className="flex w-full flex-col gap-5 px-20">
       <Navbar />
-      <section className="flex gap-5 px-20">
+      <section className="flex gap-5">
         <div className="flex h-fit w-[15%] flex-col gap-2 rounded-lg border p-2">
           <p className="text-lg font-medium">Categories</p>
           <div className="flex flex-col gap-2">
@@ -199,13 +202,13 @@ export default function OrderForm() {
                             <Minus className="size-5" />
                           </button>
                           <input
-                            className="w-10 rounded-md border px-1 text-black"
+                            className="w-10 rounded-md border px-1 text-black no-spinner"
                             value={item.quantity}
-                            type="text"
+                            type="number"
+                            step="any"
                             onChange={(e) =>
                               handleQuantityChange(item.item.id, e.target.value)
                             }
-                            min={0}
                           />
                           <button
                             className="bg-primary rounded-md p-1"

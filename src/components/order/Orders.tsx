@@ -29,7 +29,6 @@ import {
 
 import {
   ChevronDownIcon,
-  History,
   LoaderCircle,
   Pencil,
   Plus,
@@ -244,7 +243,6 @@ export default function Orders() {
     const response = await getOrdersByStoreIdApi(storeId);
     if (response?.status === 200) {
       setOrders(response.data.data);
-      console.log(response.data.data);
     } else {
       toast.error("Something went wrong");
     }
@@ -290,7 +288,7 @@ export default function Orders() {
   }, []);
 
   return (
-    <main className="flex w-full flex-col gap-5 px-20">
+    <main className="flex w-full flex-col gap-5 px-20 max-lg:px-5">
       <Navbar />
       <div className="flex w-full flex-col gap-3 rounded-2xl p-2">
         {isAdmin ? (
@@ -300,7 +298,7 @@ export default function Orders() {
                 <Button
                   variant="outline"
                   id="date"
-                  className="w-100 justify-between font-normal"
+                  className="w-[25%] justify-between font-normal max-lg:w-[30%]"
                 >
                   {fromDate
                     ? fromDate.toLocaleString() // shows date + time
@@ -354,7 +352,7 @@ export default function Orders() {
                 <Button
                   variant="outline"
                   id="date"
-                  className="w-100 justify-between font-normal"
+                  className="w-[25%] justify-between font-normal max-lg:w-[30%]"
                 >
                   {toDate ? toDate.toLocaleString() : "To Date & Time"}
                   <ChevronDownIcon />
@@ -403,7 +401,7 @@ export default function Orders() {
             </Popover>
 
             <Button
-              className="border-primary w-60 cursor-pointer"
+              className="border-primary w-[20%] cursor-pointer max-lg:w-[15%]"
               variant={"outline"}
               onClick={filterOrders}
             >
@@ -414,17 +412,10 @@ export default function Orders() {
               )}
             </Button>
             <Button
-              className="border-primary w-60 cursor-pointer text-white"
+              className="border-primary w-[20%] cursor-pointer text-white max-lg:w-[15%]"
               onClick={exportOrderSummaryToExcel}
             >
               Export
-            </Button>
-            <Button
-              className="border-primary text-primary w-60 cursor-pointer"
-              onClick={() => navigate("/order/returns")}
-              variant={"outline"}
-            >
-              <History size={24} /> Return
             </Button>
           </div>
         ) : (
@@ -435,13 +426,6 @@ export default function Orders() {
             >
               Create new
               <Plus size={20} />
-            </Button>
-            <Button
-              className="border-primary text-primary w-60 cursor-pointer"
-              onClick={() => navigate("/order/returns")}
-              variant={"outline"}
-            >
-              <History size={24} /> Return
             </Button>
           </div>
         )}
@@ -495,7 +479,7 @@ export default function Orders() {
       </div>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger className="hidden"></DialogTrigger>
-        <DialogContent className="min-w-6xl">
+        <DialogContent className="min-w-6xl max-lg:min-w-2xl">
           <DialogHeader className="flex">
             <div className="flex items-start justify-between pr-10">
               <DialogTitle className="text-primary">

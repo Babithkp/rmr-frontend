@@ -1,17 +1,11 @@
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { useEffect, useState } from "react";
 import type { ItemInputs } from "../item/ItemList";
-import { ChevronDownIcon, LoaderCircle, Minus, Plus } from "lucide-react";
+import { LoaderCircle, Minus, Plus } from "lucide-react";
 import { Button } from "../ui/button";
 import { toast } from "react-toastify";
 import { getAllItemsApi } from "@/api/item";
 import { createClosingStockApi } from "@/api/store";
 import Navbar from "../Navbar";
-import { Calendar } from "@/components/ui/calendar";
 
 interface OrderItem {
   itemId: string;
@@ -23,8 +17,6 @@ interface OrderItem {
 
 export default function ClosingStockForm() {
   const [storeId, setStoreId] = useState("");
-  const [date, setDate] = useState<Date | undefined>(undefined);
-  const [openDate, setOpenDate] = useState(false);
   const [categories, setCategories] = useState([]);
   const [visibleCategories, setVisibleCategories] = useState("Consumables");
   const [ordeItems, setOrdereItems] = useState<OrderItem[]>([]);
@@ -140,6 +132,7 @@ export default function ClosingStockForm() {
         new Set(response.data.data.map((item: ItemInputs) => item.category)),
       );
       setCategories(uniqueCategories as never[]);
+      setVisibleCategories(uniqueCategories[0] as never);
     } else {
       toast.error("Something went wrong");
     }
@@ -154,153 +147,103 @@ export default function ClosingStockForm() {
   }, []);
 
   return (
-    <main className="flex w-full flex-col items-center gap-5 px-20">
+    <main className="flex w-full flex-col items-center gap-5 px-20 max-lg:px-5 overflow-auto">
       <Navbar />
-      <section className="flex w-full gap-5">
-        <div className="flex w-[20%] flex-col gap-2">
-          <Popover open={openDate} onOpenChange={setOpenDate}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                id="date"
-                className="w-full justify-between font-normal"
-              >
-                {date
-                  ? date.toLocaleString() // shows date + time
-                  : "From Date & Time"}
-                <ChevronDownIcon />
-              </Button>
-            </PopoverTrigger>
-
-            <PopoverContent
-              className="w-auto space-y-2 overflow-hidden p-4"
-              align="start"
-            >
-              {/* Calendar Picker */}
-              <Calendar
-                mode="single"
-                selected={date}
-                captionLayout="dropdown"
-                onSelect={(date) => {
-                  if (date) {
-                    const updatedDate = new Date(date || new Date());
-                    updatedDate.setFullYear(date.getFullYear());
-                    updatedDate.setMonth(date.getMonth());
-                    updatedDate.setDate(date.getDate());
-                    setDate(updatedDate);
-                  }
-                }}
-              />
-
-              {/* Time Picker */}
-              <div className="flex items-center gap-2">
-                <label className="text-sm">Time:</label>
-                <input
-                  type="time"
-                  value={date ? date.toTimeString().slice(0, 5) : ""}
-                  onChange={(e) => {
-                    const [hours, minutes] = e.target.value
-                      .split(":")
-                      .map(Number);
-                    const updatedDate = new Date(date || new Date());
-                    updatedDate.setHours(hours);
-                    updatedDate.setMinutes(minutes);
-                    setDate(updatedDate);
-                  }}
-                  className="rounded border px-2 py-1 text-sm"
-                />
+      <section className="flex w-full gap-5 max-lg:flex-col">
+        <div className="flex w-[70%] justify-between gap-5 max-lg:w-full">
+          <div className="flex w-[30%] flex-col gap-2">
+            <div className="flex h-fit flex-col gap-2 rounded-lg border p-2">
+              <p className="text-lg font-medium">Categories</p>
+              <div className="flex flex-col gap-2">
+                {categories.map((category, i) => (
+                  <div
+                    key={i}
+                    className={`hover:bg-primary cursor-pointer rounded-md p-1 hover:text-white ${visibleCategories === category && "bg-primary text-white"}`}
+                    onClick={() => setVisibleCategories(category)}
+                  >
+                    {category}
+                  </div>
+                ))}
               </div>
-            </PopoverContent>
-          </Popover>
-          <div className="flex h-fit flex-col gap-2 rounded-lg border p-2">
-            <p className="text-lg font-medium">Categories</p>
-            <div className="flex flex-col gap-2">
-              {categories.map((category, i) => (
-                <div
-                  key={i}
-                  className={`hover:bg-primary cursor-pointer rounded-md p-1 hover:text-white ${visibleCategories === category && "bg-primary text-white"}`}
-                  onClick={() => setVisibleCategories(category)}
-                >
-                  {category}
-                </div>
-              ))}
             </div>
           </div>
-        </div>
-        <div className="h-[85vh] w-[50%] overflow-y-auto rounded-lg border">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b text-[#797979]">
-                <th className="py-1">Item</th>
-                <th className="py-1">Unit</th>
-                <th className="py-1">Full</th>
-                <th className="py-1">Loose</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ordeItems.map((item, i) => (
-                <tr key={i} className="border-b">
-                  {item.item.category === visibleCategories && (
-                    <>
-                      <td className="place-items-center py-1 text-center">
-                        <img
-                          src={item.item.imageUrl}
-                          alt="Item"
-                          className="w-15 object-cover"
-                        />
-                        <p className="text-xs">{item.item.name}</p>
-                      </td>
-                      <td className="text-center">{item.item.unit}</td>
-                      <td className="text-center text-white">
-                        <div className="flex justify-center gap-2">
-                          <button
-                            className="bg-primary rounded-md p-1"
-                            onClick={() => removeQuantityHandler(item.item.id)}
-                          >
-                            <Minus className="size-5" />
-                          </button>
+          <div className="h-[85vh] w-[70%] overflow-y-auto rounded-lg border">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b text-[#797979]">
+                  <th className="py-1">Item</th>
+                  <th className="py-1">Unit</th>
+                  <th className="py-1">Full</th>
+                  <th className="py-1">Loose</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ordeItems.map((item, i) => (
+                  <tr key={i} className="border-b">
+                    {item.item.category === visibleCategories && (
+                      <>
+                        <td className="place-items-center py-1 text-center">
+                          <img
+                            src={item.item.imageUrl}
+                            alt="Item"
+                            className="w-15 object-cover"
+                          />
+                          <p className="text-xs">{item.item.name}</p>
+                        </td>
+                        <td className="text-center">{item.item.unit}</td>
+                        <td className="text-center text-white">
+                          <div className="flex justify-center gap-2">
+                            <button
+                              className="bg-primary rounded-md p-1"
+                              onClick={() =>
+                                removeQuantityHandler(item.item.id)
+                              }
+                            >
+                              <Minus className="size-5" />
+                            </button>
+                            <input
+                              className="no-spinner w-10 rounded-md border px-1 text-black"
+                              step="any"
+                              type="number"
+                              value={item.full}
+                              onChange={(e) =>
+                                handleQuantityChange(
+                                  item.item.id,
+                                  e.target.value,
+                                  item.loose.toString(),
+                                )
+                              }
+                            />
+                            <button
+                              className="bg-primary rounded-md p-1"
+                              onClick={() => addQuantityHandler(item.item.id)}
+                            >
+                              <Plus className="size-5" />
+                            </button>
+                          </div>
+                        </td>
+                        <td className="w-30 px-5 text-center">
                           <input
-                            className="no-spinner w-10 rounded-md border px-1 text-black"
-                            step="any"
-                            type="number"
-                            value={item.full}
-                            onChange={(e) =>
+                            className={`w-full rounded border px-2 ${item.item.quantityType === "Full only" ? "hidden" : ""}`}
+                            onChange={(e) => {
                               handleQuantityChange(
                                 item.item.id,
+                                item.full.toString(),
                                 e.target.value,
-                                item.loose.toString(),
-                              )
-                            }
+                              );
+                            }}
+                            value={item.loose}
                           />
-                          <button
-                            className="bg-primary rounded-md p-1"
-                            onClick={() => addQuantityHandler(item.item.id)}
-                          >
-                            <Plus className="size-5" />
-                          </button>
-                        </div>
-                      </td>
-                      <td className="w-30 px-5 text-center">
-                        <input
-                          className={`w-full rounded border px-2 ${item.item.quantityType === "Full only" ? "hidden" : ""}`}
-                          onChange={(e) => {
-                            handleQuantityChange(
-                              item.item.id,
-                              item.full.toString(),
-                              e.target.value,
-                            );
-                          }}
-                          value={item.loose}
-                        />
-                      </td>
-                    </>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div className="flex h-[85vh] w-[30%] flex-col justify-between gap-5 overflow-y-auto rounded-lg border p-3">
+        <div className="flex h-[85vh] w-[30%] flex-col justify-between gap-5 overflow-y-auto rounded-lg border p-3 max-lg:w-full">
           <div className="flex w-full flex-col gap-2">
             <p className="font-bold">Item Total</p>
             <table>
