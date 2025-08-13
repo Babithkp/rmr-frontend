@@ -252,10 +252,10 @@ export default function ItemList({
             Create item
             <Plus size={20} />
           </DialogTrigger>
-          <DialogContent className="min-w-5xl max-lg:min-w-2xl">
+          <DialogContent className="min-w-5xl max-xl:min-w-3xl h-[80vh] overflow-auto">
             <DialogHeader>
               <DialogTitle>
-                {formStatus == "New" ? "Create Store" : "Edit Store"}
+                {formStatus == "New" ? "Create BOM" : "Edit BOM"}
               </DialogTitle>
             </DialogHeader>
             <DialogDescription></DialogDescription>
@@ -438,7 +438,7 @@ export default function ItemList({
                     />
                   )}
                 </button>
-                <div className="flex  flex-wrap justify-between gap-5 max-lg:w-[60%]">
+                <div className="flex  flex-wrap justify-between gap-5 max-xl:w-[60%]">
                   <div className="w-full ">
                     <div className="flex w-full flex-col gap-2">
                       <label>Quantity / unit</label>
@@ -589,7 +589,7 @@ export default function ItemList({
         onOpenChange={setIsItemDetailsModalOpen}
       >
         <DialogTrigger className="hidden"></DialogTrigger>
-        <DialogContent className="min-w-6xl max-lg:min-w-2xl">
+        <DialogContent className="min-w-6xl max-xl:min-w-2xl">
           <DialogHeader className="flex">
             <div className="flex items-start justify-between pr-10">
               <DialogTitle className="text-primary">
@@ -637,7 +637,7 @@ export default function ItemList({
             </div>
           </DialogHeader>
           <DialogDescription></DialogDescription>
-          <div className="grid grid-cols-3 gap-5 max-lg:grid-cols-2">
+          <div className="grid grid-cols-3 gap-5 max-xl:grid-cols-2">
             <div className="flex items-end gap-5">
               <label className="font-medium">Item ID</label>
               <p className="font-light">{selectedItem?.itemId}</p>

@@ -475,7 +475,7 @@ export default function BomList({
         onOpenChange={setIsBomDetailsModalOpen}
       >
         <DialogTrigger className="hidden"></DialogTrigger>
-        <DialogContent className="min-w-6xl">
+        <DialogContent className="min-w-6xl max-xl:min-w-2xl">
           <DialogHeader className="flex">
             <div className="flex items-start justify-between pr-10">
               <DialogTitle className="text-primary">

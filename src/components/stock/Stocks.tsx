@@ -78,7 +78,7 @@ export default function Stocks() {
   }, []);
 
   return (
-    <main className="flex w-full flex-col items-center gap-5 px-20 max-lg:px-5">
+    <main className="flex w-full flex-col items-center gap-5 px-20 max-xl:px-5">
       <Navbar />
       <div className="flex w-full justify-between gap-5 rounded-full py-2 font-medium">
         <Popover open={openFromDate} onOpenChange={setOpenFromDate}>
@@ -238,7 +238,7 @@ export default function Stocks() {
       </div>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger className="hidden"></DialogTrigger>
-        <DialogContent className="min-w-6xl max-lg:min-w-2xl">
+        <DialogContent className="min-w-6xl max-xl:min-w-2xl">
           <DialogHeader className="flex">
             <DialogTitle className="text-primary"></DialogTitle>
           </DialogHeader>

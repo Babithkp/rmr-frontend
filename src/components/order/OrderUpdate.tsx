@@ -112,18 +112,15 @@ export default function OrderUpdate() {
   };
 
   const handleQuantityChange = (id: string, value: string) => {
-    const parsed = parseInt(value, 10);
-  
-    // Guard against invalid input
-    if (isNaN(parsed) || parsed < 0) return;
-  
+    const parsed = value ? parseFloat(value) : 0;
+
     const updatedItems = ordeItems.map((orderItem) => {
       if (orderItem.item.id === id) {
         const gst = parseFloat(orderItem.item.GST);
         const unitPriceWithGst =
           orderItem.item.price + (orderItem.item.price * gst) / 100;
         const totalPrice = parsed * unitPriceWithGst;
-  
+
         return {
           ...orderItem,
           quantity: parsed,
@@ -132,7 +129,7 @@ export default function OrderUpdate() {
       }
       return orderItem;
     });
-  
+
     setOrdereItems(updatedItems);
   };
 
@@ -176,10 +173,10 @@ export default function OrderUpdate() {
   }, []);
 
   return (
-    <main className="flex w-full flex-col gap-5 px-20">
+    <main className="flex w-full flex-col gap-5 px-20 max-xl:px-5 max-xl:text-[10px]">
       <Navbar />
-      <section className="flex gap-5 ">
-        <div className="flex h-fit w-[15%] flex-col gap-2 rounded-lg border p-2">
+      <section className="flex gap-5">
+        <div className="flex h-fit w-[30%] flex-col gap-2 rounded-lg border p-2">
           <p className="text-lg font-medium">Categories</p>
           <div className="flex flex-col gap-2">
             {categories.map((category, i) => (
@@ -193,7 +190,7 @@ export default function OrderUpdate() {
             ))}
           </div>
         </div>
-        <div className="w-[50%] overflow-y-auto rounded-lg border">
+        <div className="w-[70%] overflow-y-auto rounded-lg border">
           <table className="w-full">
             <thead>
               <tr className="text-[#797979]">
@@ -300,7 +297,11 @@ export default function OrderUpdate() {
                   .toFixed(2)}
               </p>
             </div>
-            <Button className="w-full text-white" onClick={onSubmit} disabled={loading}>
+            <Button
+              className="w-full text-white"
+              onClick={onSubmit}
+              disabled={loading}
+            >
               {loading ? (
                 <LoaderCircle size={24} className="animate-spin" />
               ) : (

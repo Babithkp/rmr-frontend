@@ -288,7 +288,7 @@ export default function Orders() {
   }, []);
 
   return (
-    <main className="flex w-full flex-col gap-5 px-20 max-lg:px-5">
+    <main className="flex w-full flex-col gap-5 px-20 max-xl:px-5">
       <Navbar />
       <div className="flex w-full flex-col gap-3 rounded-2xl p-2">
         {isAdmin ? (
@@ -298,7 +298,7 @@ export default function Orders() {
                 <Button
                   variant="outline"
                   id="date"
-                  className="w-[25%] justify-between font-normal max-lg:w-[30%]"
+                  className="w-[25%] justify-between font-normal max-xl:w-[30%]"
                 >
                   {fromDate
                     ? fromDate.toLocaleString() // shows date + time
@@ -352,7 +352,7 @@ export default function Orders() {
                 <Button
                   variant="outline"
                   id="date"
-                  className="w-[25%] justify-between font-normal max-lg:w-[30%]"
+                  className="w-[25%] justify-between font-normal max-xl:w-[30%]"
                 >
                   {toDate ? toDate.toLocaleString() : "To Date & Time"}
                   <ChevronDownIcon />
@@ -401,7 +401,7 @@ export default function Orders() {
             </Popover>
 
             <Button
-              className="border-primary w-[20%] cursor-pointer max-lg:w-[15%]"
+              className="border-primary w-[20%] cursor-pointer max-xl:w-[15%]"
               variant={"outline"}
               onClick={filterOrders}
             >
@@ -412,7 +412,7 @@ export default function Orders() {
               )}
             </Button>
             <Button
-              className="border-primary w-[20%] cursor-pointer text-white max-lg:w-[15%]"
+              className="border-primary w-[20%] cursor-pointer text-white max-xl:w-[15%]"
               onClick={exportOrderSummaryToExcel}
             >
               Export
@@ -479,7 +479,7 @@ export default function Orders() {
       </div>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger className="hidden"></DialogTrigger>
-        <DialogContent className="min-w-6xl max-lg:min-w-2xl">
+        <DialogContent className="min-w-6xl max-xl:min-w-2xl">
           <DialogHeader className="flex">
             <div className="flex items-start justify-between pr-10">
               <DialogTitle className="text-primary">

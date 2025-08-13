@@ -274,7 +274,7 @@ export default function SaleReport() {
   }, []);
 
   return (
-    <main className="flex w-full flex-col gap-5 px-20 max-lg:px-5">
+    <main className="flex w-full flex-col gap-5 px-20 max-xl:px-5">
       <Navbar />
       <button
         className="flex h-[20vh] cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[#FF71A2] bg-[#FFECF3] text-[#FF71A2]"

@@ -147,10 +147,9 @@ export default function ClosingStockForm() {
   }, []);
 
   return (
-    <main className="flex w-full flex-col items-center gap-5 px-20 max-lg:px-5 overflow-auto">
+    <main className="flex w-full flex-col items-center gap-5 px-20 max-xl:px-5 max-xl:text-[10px]">
       <Navbar />
-      <section className="flex w-full gap-5 max-lg:flex-col">
-        <div className="flex w-[70%] justify-between gap-5 max-lg:w-full">
+      <section className="flex w-full gap-5  ">
           <div className="flex w-[30%] flex-col gap-2">
             <div className="flex h-fit flex-col gap-2 rounded-lg border p-2">
               <p className="text-lg font-medium">Categories</p>
@@ -167,7 +166,7 @@ export default function ClosingStockForm() {
               </div>
             </div>
           </div>
-          <div className="h-[85vh] w-[70%] overflow-y-auto rounded-lg border">
+          <div className=" w-[70%] overflow-y-auto rounded-lg border">
             <table className="w-full">
               <thead>
                 <tr className="border-b text-[#797979]">
@@ -242,8 +241,7 @@ export default function ClosingStockForm() {
               </tbody>
             </table>
           </div>
-        </div>
-        <div className="flex h-[85vh] w-[30%] flex-col justify-between gap-5 overflow-y-auto rounded-lg border p-3 max-lg:w-full">
+        <div className="flex h-[85vh] w-[30%] flex-col justify-between gap-5 overflow-y-auto rounded-lg border p-3 ">
           <div className="flex w-full flex-col gap-2">
             <p className="font-bold">Item Total</p>
             <table>

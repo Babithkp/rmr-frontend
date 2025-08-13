@@ -549,12 +549,12 @@ export default function Report() {
   }, []);
 
   return (
-    <main className="flex h-screen w-full flex-col gap-5 overflow-auto px-20 max-lg:px-5">
+    <main className="flex h-screen w-full flex-col gap-5 overflow-auto px-20 max-xl:px-5">
       <Navbar />
-      <section className="flex items-center gap-5 max-lg:flex-wrap">
+      <section className="flex items-center gap-5 max-xl:flex-wrap">
         <p>Report for</p>
         <Select onValueChange={setSelectedStore} value={selectedStore}>
-          <SelectTrigger className="w-[20%] max-lg:w-[25%]">
+          <SelectTrigger className="w-[20%] max-xl:w-[25%]">
             <SelectValue placeholder="Select a store" />
           </SelectTrigger>
           <SelectContent>
@@ -570,7 +570,7 @@ export default function Report() {
             <Button
               variant="outline"
               id="date"
-              className="w-[20%] justify-between font-normal max-lg:w-[25%]"
+              className="w-[20%] justify-between font-normal max-xl:w-[25%]"
             >
               {fromDate
                 ? fromDate.toLocaleString() // shows date + time
@@ -624,7 +624,7 @@ export default function Report() {
             <Button
               variant="outline"
               id="date"
-              className="w-[20%] justify-between font-normal max-lg:w-[25%]"
+              className="w-[20%] justify-between font-normal max-xl:w-[25%]"
             >
               {toDate ? toDate.toLocaleString() : "To Date & Time"}
               <ChevronDownIcon />
@@ -673,7 +673,7 @@ export default function Report() {
         </Popover>
 
         <Button
-          className="border-primary text-primary w-[10%] cursor-pointer max-lg:w-[20%]"
+          className="border-primary text-primary w-[10%] cursor-pointer max-xl:w-[20%]"
           variant={"outline"}
           onClick={filterHandler}
           disabled={isLoading}
@@ -687,13 +687,13 @@ export default function Report() {
           )}
         </Button>
         <Button
-          className="border-primary w-[10%] cursor-pointer text-white max-lg:w-[20%]"
+          className="border-primary w-[10%] cursor-pointer text-white max-xl:w-[20%]"
           onClick={exportHandler}
         >
           Export
         </Button>
         <Button
-          className="border-primary text-primary w-[10%] cursor-pointer max-lg:w-[20%]"
+          className="border-primary text-primary w-[10%] cursor-pointer max-xl:w-[20%]"
           variant={"outline"}
           onClick={() => nagivate("/report/sale-report")}
         >

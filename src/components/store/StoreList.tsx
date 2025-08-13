@@ -246,7 +246,7 @@ export default function StoreList() {
             Create new
             <Plus size={20} />
           </DialogTrigger>
-          <DialogContent className="min-w-6xl max-lg:min-w-2xl">
+          <DialogContent className="min-w-6xl max-xl:min-w-2xl">
             <DialogHeader>
               <DialogTitle className="text-primary">
                 {formStatus == "New" ? "Create Store" : "Edit Store"}
@@ -258,7 +258,7 @@ export default function StoreList() {
               onSubmit={handleSubmit(onSubmit)}
             >
               <div
-                className="flex h-35 w-[15%] cursor-pointer flex-col items-center justify-center rounded-md border border-dashed text-sm text-slate-600 max-lg:w-[30%]"
+                className="flex h-35 w-[15%] cursor-pointer flex-col items-center justify-center rounded-md border border-dashed text-sm text-slate-600 max-xl:w-[30%]"
                 onClick={() => imageRef.current?.click()}
               >
                 <input
@@ -286,7 +286,7 @@ export default function StoreList() {
                   />
                 )}
               </div>
-              <div className="h-fit w-[40%] max-lg:w-[60%]">
+              <div className="h-fit w-[40%] max-xl:w-[60%]">
                 <div className="flex w-full flex-col gap-2">
                   <label>Store ID</label>
                   <input
@@ -312,7 +312,7 @@ export default function StoreList() {
                   </p>
                 )}
               </div>
-              <div className="w-[40%] max-lg:w-[48%]">
+              <div className="w-[40%] max-xl:w-[48%]">
                 <div className="flex w-full flex-col gap-2">
                   <label>Store Name</label>
                   <input
@@ -330,7 +330,7 @@ export default function StoreList() {
                   </p>
                 )}
               </div>
-              <div className="w-[30%] max-lg:w-[48%]">
+              <div className="w-[30%] max-xl:w-[48%]">
                 <div className="flex w-full flex-col gap-2">
                   <label>Store Location</label>
                   <input
@@ -348,7 +348,7 @@ export default function StoreList() {
                 )}
               </div>
 
-              <div className="w-[30%] max-lg:w-[48%]">
+              <div className="w-[30%] max-xl:w-[48%]">
                 <div className="flex w-full flex-col gap-2">
                   <label>Owner Name</label>
                   <input
@@ -363,7 +363,7 @@ export default function StoreList() {
                   </p>
                 )}
               </div>
-              <div className="w-[30%] max-lg:w-[48%]">
+              <div className="w-[30%] max-xl:w-[48%]">
                 <div className="flex w-full flex-col gap-2">
                   <label>Conatct Number</label>
                   <input
@@ -392,7 +392,7 @@ export default function StoreList() {
                   </p>
                 )}
               </div>
-              <div className="w-[49%] max-lg:w-[48%]">
+              <div className="w-[49%] max-xl:w-[48%]">
                 <div className="flex w-full flex-col gap-2">
                   <label>Username</label>
                   <input
@@ -407,7 +407,7 @@ export default function StoreList() {
                   </p>
                 )}
               </div>
-              <div className="w-[49%] max-lg:w-[48%]">
+              <div className="w-[49%] max-xl:w-[48%]">
                 <div className="flex w-full flex-col gap-2">
                   <label>Password</label>
                   <input
@@ -476,7 +476,7 @@ export default function StoreList() {
         onOpenChange={setIsStoreDetailsModalOpen}
       >
         <DialogTrigger className="hidden"></DialogTrigger>
-        <DialogContent className="min-w-6xl max-lg:min-w-2xl">
+        <DialogContent className="min-w-6xl max-xl:min-w-2xl">
           <DialogHeader className="flex">
             <div className="flex items-start justify-between pr-10">
               <DialogTitle className="text-primary">
@@ -524,7 +524,7 @@ export default function StoreList() {
             </div>
           </DialogHeader>
           <DialogDescription></DialogDescription>
-          <div className="grid grid-cols-3 gap-5 max-lg:grid-cols-2">
+          <div className="grid grid-cols-3 gap-5 max-xl:grid-cols-2">
             <div className="flex items-center gap-5">
               {selectedStore?.image && (
                 <img
@@ -550,7 +550,7 @@ export default function StoreList() {
               <label className="font-medium">Owner</label>
               <p>{selectedStore?.storeManager}</p>
             </div>
-            <div className="col-span-2 flex items-center gap-5 max-lg:col-span-1">
+            <div className="col-span-2 flex items-center gap-5 max-xl:col-span-1">
               <label className="font-medium">Conatct Number</label>
               <p>{selectedStore?.contactNumber}</p>
             </div>
@@ -559,7 +559,7 @@ export default function StoreList() {
               <label className="font-medium">Username</label>
               <p>{selectedStore?.username}</p>
             </div>
-            <div className="flex items-center gap-5 max-lg:col-span-2">
+            <div className="flex items-center gap-5 max-xl:col-span-2">
               <label className="font-medium">Password</label>
               <input
                 value={selectedStore?.password}
