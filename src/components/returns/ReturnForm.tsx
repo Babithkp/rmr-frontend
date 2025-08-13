@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
 import {
   Select,
@@ -10,7 +10,7 @@ import {
 import type { ItemInputs } from "../item/ItemList";
 import { toast } from "react-toastify";
 import { getAllItemsApi } from "@/api/item";
-import { LoaderCircle, Minus, Plus, Trash } from "lucide-react";
+import { LoaderCircle, Trash } from "lucide-react";
 import { createReturnsApi } from "@/api/returns";
 
 export interface ReturnItem {
@@ -27,6 +27,33 @@ export default function ReturnForm() {
   const [returnItem, setReturnItem] = useState<ReturnItem[]>([]);
   const [selectedItemName, setSelectedItemName] = useState("");
   const [loading, setLoading] = useState(false);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const inputRefsReason = useRef<(HTMLInputElement | null)[]>([]);
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number,
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const nextIndex = index + 1;
+      if (nextIndex < inputRefs.current.length) {
+        inputRefs.current[nextIndex]?.focus();
+      }
+    }
+  };
+  const handleKeyDownReason = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number,
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const nextIndex = index + 1;
+      if (nextIndex < inputRefsReason.current.length) {
+        inputRefsReason.current[nextIndex]?.focus();
+      }
+    }
+  };
 
   const onSubmit = async () => {
     if (returnItem.length == 0) {
@@ -47,32 +74,10 @@ export default function ReturnForm() {
   };
 
   const handleQuantityChange = (id: string, value: string) => {
-    const parsed = parseFloat(value);
-    // Guard against invalid input
-    if (isNaN(parsed) || parsed < 0) return;
+    const parsed = value ? parseFloat(value) : 0;
     setReturnItem((prev) =>
       prev.map((item) =>
         item.itemId === id ? { ...item, quantity: parsed } : item,
-      ),
-    );
-  };
-
-  const addQuantityHandler = (id: string) => {
-    setReturnItem((prev) =>
-      prev.map((item) =>
-        item.itemId === id ? { ...item, quantity: item.quantity + 1 } : item,
-      ),
-    );
-  };
-
-  const removeQuantityHandler = (id: string) => {
-    if (returnItem.find((item) => item.itemId === id)?.quantity === 1) {
-      toast.warn("Item quantity not be less than 1");
-      return;
-    }
-    setReturnItem((prev) =>
-      prev.map((item) =>
-        item.itemId === id ? { ...item, quantity: item.quantity - 1 } : item,
       ),
     );
   };
@@ -159,34 +164,26 @@ export default function ReturnForm() {
               </tr>
             </thead>
             <tbody>
-              {returnItem.map((item) => (
+              {returnItem.map((item, i) => (
                 <tr key={item.itemId} className="border-t">
                   <td className="py-2 text-center">{item.name}</td>
                   <td className="text-center">{item.unit}</td>
                   <td className="text-center">
                     <div className="flex justify-center gap-2">
-                      <button
-                        className="bg-primary rounded-md p-1"
-                        onClick={() => removeQuantityHandler(item.itemId)}
-                      >
-                        <Minus className="size-5" color="white" />
-                      </button>
                       <input
                         className="no-spinner w-10 rounded-md border px-1 text-black"
                         value={item.quantity}
                         type="number"
                         step="any"
+                        ref={(el) => {
+                          inputRefs.current[i] = el;
+                        }}
+                        onKeyDown={(e) => handleKeyDown(e, i)}
                         onChange={(e) =>
                           handleQuantityChange(item.itemId, e.target.value)
                         }
                         min={0}
                       />
-                      <button
-                        className="bg-primary rounded-md p-1"
-                        onClick={() => addQuantityHandler(item.itemId)}
-                      >
-                        <Plus className="size-5" color="white" />
-                      </button>
                     </div>
                   </td>
                   <td className="text-center">{item.price * item.quantity}</td>
@@ -196,6 +193,10 @@ export default function ReturnForm() {
                       type="text"
                       placeholder="Type here..."
                       value={item.reason}
+                      ref={(el) => {
+                        inputRefsReason.current[i] = el;
+                      }}
+                      onKeyDown={(e) => handleKeyDownReason(e, i)}
                       onChange={(e) =>
                         setReturnItem((prev) =>
                           prev.map((i) =>

@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ItemInputs } from "../item/ItemList";
-import { LoaderCircle, Minus, Plus } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { Button } from "../ui/button";
 import { toast } from "react-toastify";
 import { getAllItemsApi } from "@/api/item";
@@ -21,6 +21,33 @@ export default function ClosingStockForm() {
   const [visibleCategories, setVisibleCategories] = useState("Consumables");
   const [ordeItems, setOrdereItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const inputLooseRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number,
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const nextIndex = index + 1;
+      if (nextIndex < inputRefs.current.length) {
+        inputRefs.current[nextIndex]?.focus();
+      }
+    }
+  };
+  const handleKeyDownLoose = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number,
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const nextIndex = index + 1;
+      if (nextIndex < inputLooseRefs.current.length) {
+        inputLooseRefs.current[nextIndex]?.focus();
+      }
+    }
+  };
 
   const onSubmit = async () => {
     if (ordeItems.length == 0) {
@@ -47,42 +74,6 @@ export default function ClosingStockForm() {
       toast.error("Something went wrong");
     }
     setLoading(false);
-  };
-
-  const addQuantityHandler = (id: string) => {
-    const updatedItems = ordeItems.map((orderItem) => {
-      if (orderItem.item.id === id) {
-        const newQuantity = orderItem.quantity + 1;
-        const full = orderItem.full + 1;
-
-        return {
-          ...orderItem,
-          quantity: newQuantity,
-          full: full,
-        };
-      }
-      return orderItem;
-    });
-
-    setOrdereItems(updatedItems);
-  };
-
-  const removeQuantityHandler = (id: string) => {
-    const updatedItems = ordeItems.map((orderItem) => {
-      if (orderItem.item.id === id) {
-        const newQuantity = Math.max(orderItem.quantity - 1, 0);
-        const full = orderItem.full - 1;
-
-        return {
-          ...orderItem,
-          quantity: newQuantity,
-          full: newQuantity === 0 ? 0 : full,
-        };
-      }
-      return orderItem;
-    });
-
-    setOrdereItems(updatedItems);
   };
 
   const handleQuantityChange = (id: string, full: string, loose: string) => {
@@ -149,99 +140,93 @@ export default function ClosingStockForm() {
   return (
     <main className="flex w-full flex-col items-center gap-5 px-20 max-xl:px-5 max-xl:text-[10px]">
       <Navbar />
-      <section className="flex w-full gap-5  ">
-          <div className="flex w-[30%] flex-col gap-2">
-            <div className="flex h-fit flex-col gap-2 rounded-lg border p-2">
-              <p className="text-lg font-medium">Categories</p>
-              <div className="flex flex-col gap-2">
-                {categories.map((category, i) => (
-                  <div
-                    key={i}
-                    className={`hover:bg-primary cursor-pointer rounded-md p-1 hover:text-white ${visibleCategories === category && "bg-primary text-white"}`}
-                    onClick={() => setVisibleCategories(category)}
-                  >
-                    {category}
-                  </div>
-                ))}
-              </div>
+      <section className="flex w-full gap-5">
+        <div className="flex w-[30%] flex-col gap-2">
+          <div className="flex h-fit flex-col gap-2 rounded-lg border p-2">
+            <p className="text-lg font-medium">Categories</p>
+            <div className="flex flex-col gap-2">
+              {categories.map((category, i) => (
+                <div
+                  key={i}
+                  className={`hover:bg-primary cursor-pointer rounded-md p-1 hover:text-white ${visibleCategories === category && "bg-primary text-white"}`}
+                  onClick={() => setVisibleCategories(category)}
+                >
+                  {category}
+                </div>
+              ))}
             </div>
           </div>
-          <div className=" w-[70%] overflow-y-auto rounded-lg border">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b text-[#797979]">
-                  <th className="py-1">Item</th>
-                  <th className="py-1">Unit</th>
-                  <th className="py-1">Full</th>
-                  <th className="py-1">Loose</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ordeItems.map((item, i) => (
-                  <tr key={i} className="border-b">
-                    {item.item.category === visibleCategories && (
-                      <>
-                        <td className="place-items-center py-1 text-center">
-                          <img
-                            src={item.item.imageUrl}
-                            alt="Item"
-                            className="w-15 object-cover"
-                          />
-                          <p className="text-xs">{item.item.name}</p>
-                        </td>
-                        <td className="text-center">{item.item.unit}</td>
-                        <td className="text-center text-white">
-                          <div className="flex justify-center gap-2">
-                            <button
-                              className="bg-primary rounded-md p-1"
-                              onClick={() =>
-                                removeQuantityHandler(item.item.id)
-                              }
-                            >
-                              <Minus className="size-5" />
-                            </button>
-                            <input
-                              className="no-spinner w-10 rounded-md border px-1 text-black"
-                              step="any"
-                              type="number"
-                              value={item.full}
-                              onChange={(e) =>
-                                handleQuantityChange(
-                                  item.item.id,
-                                  e.target.value,
-                                  item.loose.toString(),
-                                )
-                              }
-                            />
-                            <button
-                              className="bg-primary rounded-md p-1"
-                              onClick={() => addQuantityHandler(item.item.id)}
-                            >
-                              <Plus className="size-5" />
-                            </button>
-                          </div>
-                        </td>
-                        <td className="w-30 px-5 text-center">
+        </div>
+        <div className="w-[70%] overflow-y-auto rounded-lg border">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b text-[#797979]">
+                <th className="py-1">Item</th>
+                <th className="py-1">Unit</th>
+                <th className="py-1">Full</th>
+                <th className="py-1">Loose</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ordeItems.map((item, i) => (
+                <tr key={i} className="border-b">
+                  {item.item.category === visibleCategories && (
+                    <>
+                      <td className="place-items-center py-1 text-center">
+                        <img
+                          src={item.item.imageUrl}
+                          alt="Item"
+                          className="w-15 object-cover"
+                        />
+                        <p className="text-xs">{item.item.name}</p>
+                      </td>
+                      <td className="text-center">{item.item.unit}</td>
+                      <td className="text-center text-white">
+                        <div className="flex justify-center gap-2">
                           <input
-                            className={`w-full rounded border px-2 ${item.item.quantityType === "Full only" ? "hidden" : ""}`}
-                            onChange={(e) => {
+                            className="no-spinner w-10 rounded-md border px-1 text-black"
+                            step="any"
+                            type="number"
+                            value={item.full}
+                            ref={(el) => {
+                              inputRefs.current[i] = el;
+                            }}
+                            onKeyDown={(e) => handleKeyDown(e, i)}
+                            onChange={(e) =>
                               handleQuantityChange(
                                 item.item.id,
-                                item.full.toString(),
                                 e.target.value,
-                              );
-                            }}
-                            value={item.loose}
+                                item.loose.toString(),
+                              )
+                            }
                           />
-                        </td>
-                      </>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        <div className="flex h-[85vh] w-[30%] flex-col justify-between gap-5 overflow-y-auto rounded-lg border p-3 ">
+                        </div>
+                      </td>
+                      <td className="w-30 px-5 text-center">
+                        <input
+                          className={`w-full rounded border px-2 ${item.item.quantityType === "Full only" ? "hidden" : ""}`}
+                          ref={(el) => {
+                            inputLooseRefs.current[i] = el;
+                          }}
+                          onKeyDown={(e) => handleKeyDownLoose(e, i)}
+                          onChange={(e) => {
+                            handleQuantityChange(
+                              item.item.id,
+                              item.full.toString(),
+                              e.target.value,
+                            );
+                          }}
+                          value={item.loose}
+                        />
+                      </td>
+                    </>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex h-[85vh] w-[30%] flex-col justify-between gap-5 overflow-y-auto rounded-lg border p-3">
           <div className="flex w-full flex-col gap-2">
             <p className="font-bold">Item Total</p>
             <table>

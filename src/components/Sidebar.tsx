@@ -24,7 +24,7 @@ export default function Sidebar() {
   }, []);
 
   return (
-    <nav className="bg-primary flex flex-col items-center gap-20 py-10 text-[10px] text-white h-full">
+    <nav className="bg-primary flex flex-col items-center gap-20 py-10 text-[10px] text-white h-screen overflow-y-auto">
       <LogoWhite />
       <div className="flex flex-col gap-5">
         <a

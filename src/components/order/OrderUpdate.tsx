@@ -1,6 +1,6 @@
-import { LoaderCircle, Minus, Plus } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { Button } from "../ui/button";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ItemInputs } from "../item/ItemList";
 import Navbar from "../Navbar";
 import { formatter } from "@/lib/utils";
@@ -46,6 +46,20 @@ export default function OrderUpdate() {
   const [loading, setLoading] = useState(false);
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number,
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const nextIndex = index + 1;
+      if (nextIndex < inputRefs.current.length) {
+        inputRefs.current[nextIndex]?.focus();
+      }
+    }
+  };
 
   const onSubmit = async () => {
     const hasValidQuantity = ordeItems.some((item) => item.quantity > 0);
@@ -66,49 +80,6 @@ export default function OrderUpdate() {
         toast.error("Something went wrong");
       }
     }
-  };
-
-  const addQuantityHandler = (id: string) => {
-    const updatedItems = ordeItems.map((orderItem) => {
-      if (orderItem.item.id === id) {
-        const newQuantity = orderItem.quantity + 1;
-        const gst = parseFloat(orderItem.item.GST);
-        const unitPriceWithGst =
-          orderItem.item.price + (orderItem.item.price * gst) / 100;
-        const totalPrice = newQuantity * unitPriceWithGst;
-
-        return {
-          ...orderItem,
-          quantity: newQuantity,
-          price: totalPrice,
-        };
-      }
-      return orderItem;
-    });
-
-    setOrdereItems(updatedItems);
-  };
-
-  const removeQuantityHandler = (id: string) => {
-    const updatedItems = ordeItems.map((orderItem) => {
-      if (orderItem.item.id === id) {
-        const newQuantity = Math.max(orderItem.quantity - 1, 0);
-        const gst = parseFloat(orderItem.item.GST);
-        const unitPriceWithGst =
-          orderItem.item.price + (orderItem.item.price * gst) / 100;
-        const totalPrice =
-          newQuantity === 0 ? 0 : newQuantity * unitPriceWithGst;
-
-        return {
-          ...orderItem,
-          quantity: newQuantity,
-          price: totalPrice,
-        };
-      }
-      return orderItem;
-    });
-
-    setOrdereItems(updatedItems);
   };
 
   const handleQuantityChange = (id: string, value: string) => {
@@ -221,27 +192,19 @@ export default function OrderUpdate() {
                       </td>
                       <td className="text-center text-white">
                         <div className="flex justify-center gap-2">
-                          <button
-                            className="bg-primary rounded-md p-1"
-                            onClick={() => removeQuantityHandler(item.item.id)}
-                          >
-                            <Minus className="size-5" />
-                          </button>
                           <input
                             className="w-10 rounded-md border px-1 text-black"
                             value={item.quantity}
                             type="text"
+                            ref={(el) => {
+                              inputRefs.current[i] = el;
+                            }}
+                            onKeyDown={(e) => handleKeyDown(e, i)}
                             onChange={(e) =>
                               handleQuantityChange(item.item.id, e.target.value)
                             }
                             min={0}
                           />
-                          <button
-                            className="bg-primary rounded-md p-1"
-                            onClick={() => addQuantityHandler(item.item.id)}
-                          >
-                            <Plus className="size-5" />
-                          </button>
                         </div>
                       </td>
                     </>
