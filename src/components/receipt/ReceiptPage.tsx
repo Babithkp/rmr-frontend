@@ -19,23 +19,33 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-import { LoaderCircle, Minus, Plus, Trash, Upload } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  LoaderCircle,
+  Minus,
+  Plus,
+  RefreshCcw,
+  Trash,
+  Upload,
+} from "lucide-react";
 import { toast } from "react-toastify";
 import { getAllItemsApi } from "@/api/item";
 import { Button } from "../ui/button";
 import type { ItemInputs } from "../item/ItemList";
 import {
   deleteReceiptApi,
+  getReceiptsByPageApi,
   receiptApproveApi,
   receiptCreateApi,
-  receiptGetAllApi,
-  receiptGetByStoreIdApi,
   updateReceiptApi,
 } from "@/api/receipt";
 import * as XLSX from "xlsx";
 
 type TransformedStoreData = {
   storeName: string;
+  totalAmount: number;
+  totalTax: number;
   items: {
     itemId: string;
     quantity: number;
@@ -46,6 +56,7 @@ export type ReceiptItems = {
   id: string;
   itemId: string;
   quantity: number;
+  originalQty: number;
   orderId: string | null;
   closingStockFormId: string | null;
   bOMId: string | null;
@@ -89,6 +100,23 @@ export default function ReceiptPage() {
   const [isOpen, setIsOpen] = useState(false);
   const excelRef = useRef<HTMLInputElement>(null);
   const [tableData, setTableData] = useState<string[][]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const itemsPerPage = 50;
+
+  const startIndex = (currentPage - 1) * itemsPerPage + 1;
+  const endIndex = Math.min(startIndex + itemsPerPage - 1, totalItems);
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  const handlePrev = () => {
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+  };
+
+  const handleNext = () => {
+    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+  };
 
   function transformTableData(
     data: string[][],
@@ -142,7 +170,9 @@ export default function ReceiptPage() {
       totalTax: parseFloat(storeTotals[storeName].totalTax.toFixed(2)),
     }));
 
-    return result;
+    const filteredResult = result.filter((item) => item.totalAmount > 0);
+
+    return filteredResult;
   }
 
   function calculateReceiptTotals(items: ReceiptItems[]) {
@@ -221,7 +251,7 @@ export default function ReceiptPage() {
   };
 
   const handleQuantityChange = (id: string, value: string) => {
-    const parsed = parseInt(value, 10);
+    const parsed = value ? parseFloat(value) : 0;
     if (isNaN(parsed) || parsed < 0 || !selectedReceipt) return;
 
     const updatedItems = selectedReceipt.items.map((item) => {
@@ -254,11 +284,7 @@ export default function ReceiptPage() {
       if (response?.status === 200) {
         toast.success("Receipt deleted successfully");
         setIsOpen(false);
-        if (isAdmin) {
-          getAllReceipts();
-        } else {
-          getReceiptsForStore(storeId);
-        }
+        getAllReceipts();
       } else {
         toast.error("Something went wrong");
       }
@@ -278,11 +304,7 @@ export default function ReceiptPage() {
         toast.success("Receipt updated successfully");
         setIsOpen(false);
         setSelectedReceipt(null);
-        if (isAdmin) {
-          getAllReceipts();
-        } else {
-          getReceiptsForStore(storeId);
-        }
+        getAllReceipts();
       } else {
         toast.error("Something went wrong");
       }
@@ -291,13 +313,15 @@ export default function ReceiptPage() {
   };
 
   const onSubmitTable = async () => {
-    const orders = transformTableData(tableData, existingItems);
     setLoading(true);
+    const orders = transformTableData(tableData, existingItems);
     Promise.all(
       orders.map(async (order) => {
         const response = await receiptCreateApi(order);
         if (response?.status === 200) {
-          toast.success("Receipt created successfully");
+          toast.success(
+            "Receipt created successfully to Store " + order.storeName,
+          );
           setTableData([]);
           setIsCreateModalOpen(false);
         } else {
@@ -305,6 +329,7 @@ export default function ReceiptPage() {
         }
       }),
     );
+    getAllReceipts();
     setLoading(false);
   };
 
@@ -337,11 +362,7 @@ export default function ReceiptPage() {
         toast.success("Receipt approved successfully");
         setIsOpen(false);
         setSelectedReceipt(null);
-        if (isAdmin) {
-          getAllReceipts();
-        } else {
-          getReceiptsForStore(storeId);
-        }
+        getAllReceipts();
       } else {
         toast.error("Something went wrong");
       }
@@ -358,23 +379,26 @@ export default function ReceiptPage() {
     }
   }
 
-  async function getAllReceipts() {
-    const response = await receiptGetAllApi();
+  async function getAllReceipts(storeid?: string) {
+    setLoading(true);
+    const response = await getReceiptsByPageApi(
+      currentPage,
+      itemsPerPage,
+      storeid ? storeid : storeId,
+    );
     if (response?.status === 200) {
-      setReceipts(response.data.data);
+      setReceipts(response.data.data.receipts);
+      setTotalItems(response.data.data.count);
     } else {
       toast.error("Something went wrong");
     }
+    setLoading(false);
   }
 
-  async function getReceiptsForStore(storeId: string) {
-    const response = await receiptGetByStoreIdApi(storeId);
-    if (response?.status === 200) {
-      setReceipts(response.data.data);
-    } else {
-      toast.error("Something went wrong");
-    }
-  }
+  useEffect(() => {
+    getAllReceipts();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startIndex, endIndex]);
 
   useEffect(() => {
     getAllItems();
@@ -385,94 +409,135 @@ export default function ReceiptPage() {
     } else {
       const store = localStorage.getItem("store");
       if (store) {
-        getReceiptsForStore(JSON.parse(store).id);
+        getAllReceipts(JSON.parse(store).id);
         setStoreId(JSON.parse(store).id);
       }
     }
   }, []);
 
   return (
-    <section className="w-full ">
+    <section className="w-full">
       <div className="w-full p-2">
         <div className="flex items-center justify-between">
           <p className="text-lg font-medium">Reciepts</p>
-          {isAdmin && (
-            <Dialog
-              open={isCreateModalOpen}
-              onOpenChange={setIsCreateModalOpen}
-            >
-              <DialogTrigger className="border-primary text-primary flex cursor-pointer items-center gap-2 rounded-md border p-2 px-3 text-sm whitespace-nowrap" onClick={()=>setTableData([])}>
-                <Plus size={20} />
-                Create new
-              </DialogTrigger>
-              <DialogContent className="min-w-5xl overflow-x-auto max-xl:min-w-2xl max-sm:min-w-sm ">
-                <DialogHeader>
-                  <DialogTitle>Create Receipt</DialogTitle>
-                </DialogHeader>
-                <DialogDescription></DialogDescription>
-                <div className="flex max-h-[80vh] flex-col gap-5 overflow-auto">
-                  {tableData.length === 0 && (
-                    <div className="flex flex-col gap-3 justify-end">
-                      <p>Upload Order Form</p>
+          <div className="flex gap-5">
+            <Button onClick={() => getAllReceipts()}>
+              <RefreshCcw
+                size={30}
+                className={`${loading ? "animate-spin" : ""}`}
+              />
+            </Button>
+            {isAdmin && (
+              <Dialog
+                open={isCreateModalOpen}
+                onOpenChange={setIsCreateModalOpen}
+              >
+                <DialogTrigger
+                  className="border-primary text-primary flex cursor-pointer items-center gap-2 rounded-md border p-2 px-3 text-sm whitespace-nowrap"
+                  onClick={() => setTableData([])}
+                >
+                  <Plus size={20} />
+                  Create new
+                </DialogTrigger>
+                <DialogContent className="min-w-5xl overflow-x-auto max-xl:min-w-2xl max-sm:min-w-sm">
+                  <DialogHeader>
+                    <DialogTitle>Create Receipt</DialogTitle>
+                  </DialogHeader>
+                  <DialogDescription></DialogDescription>
+                  <div className="flex max-h-[80vh] flex-col gap-5 overflow-auto">
+                    {tableData.length === 0 && (
+                      <div className="flex flex-col justify-end gap-3">
+                        <p>Upload Order Form</p>
 
-                      <div
-                        className="grid w-full cursor-pointer place-items-center gap-3 rounded-md border border-dashed p-2 py-10 text-xs text-slate-500"
-                        onClick={() => excelRef.current?.click()}
-                      >
-                        <input
-                          type="file"
-                          className="hidden"
-                          id="file-upload"
-                          onChange={handleFileUpload}
-                          ref={excelRef}
-                        />
-                        <Upload size={30} />
-                        <p>Upload your order form Excel</p>
+                        <div
+                          className="grid w-full cursor-pointer place-items-center gap-3 rounded-md border border-dashed p-2 py-10 text-xs text-slate-500"
+                          onClick={() => excelRef.current?.click()}
+                        >
+                          <input
+                            type="file"
+                            className="hidden"
+                            id="file-upload"
+                            onChange={handleFileUpload}
+                            ref={excelRef}
+                          />
+                          <Upload size={30} />
+                          <p>Upload your order form Excel</p>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {tableData.length > 0 && (
-                    <>
-                      <table className="w-full border-collapse border">
-                        <thead>
-                          <tr>
-                            {tableData[0].map((heading, index) => (
-                              <th key={index} className="border px-4 py-2">
-                                {heading}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {tableData.slice(1).map((row, rowIndex) => (
-                            <tr key={rowIndex}>
-                              {row.map((cell, colIndex) => (
-                                <td
-                                  key={colIndex}
-                                  className="border px-4 py-2 text-center"
-                                >
-                                  {cell}
-                                </td>
+                    )}
+                    {tableData.length > 0 && (
+                      <>
+                        <table className="w-full border-collapse border">
+                          <thead>
+                            <tr>
+                              {tableData[0].map((heading, index) => (
+                                <th key={index} className="border px-4 py-2">
+                                  {heading}
+                                </th>
                               ))}
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                      <div className="flex justify-start w-full  ">
-                        <Button className="text-white" onClick={onSubmitTable} >
-                          {loading ? (
-                            <LoaderCircle size={24} className="animate-spin" />
-                          ) : (
-                            "Generate Receipts"
-                          )}
-                        </Button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
+                          </thead>
+                          <tbody>
+                            {tableData.slice(1).map((row, rowIndex) => (
+                              <tr key={rowIndex}>
+                                {row.map((cell, colIndex) => (
+                                  <td
+                                    key={colIndex}
+                                    className="border px-4 py-2 text-center"
+                                  >
+                                    {cell}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        <div className="flex w-full justify-start">
+                          <Button
+                            className="cursor-pointer text-white"
+                            onClick={onSubmitTable}
+                            disabled={loading}
+                          >
+                            {loading ? (
+                              <LoaderCircle
+                                size={24}
+                                className="animate-spin"
+                              />
+                            ) : (
+                              "Generate Receipts"
+                            )}
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <p>
+                {startIndex}-{endIndex}
+              </p>
+              <p>of</p>
+              <p>{totalItems}</p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePrev}
+                  disabled={currentPage === 1}
+                  className={`cursor-pointer ${currentPage === 1 ? "opacity-50" : ""}`}
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <button
+                  className={`cursor-pointer ${currentPage === totalPages ? "opacity-50" : ""}`}
+                  onClick={handleNext}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
         <table className="mt-5 h-full w-full">
           <thead>
@@ -501,7 +566,10 @@ export default function ReceiptPage() {
                   {new Date(receipt.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-2 text-center font-medium">
-                  {new Date(receipt.createdAt).toLocaleTimeString()}
+                  {new Date(receipt.createdAt).toLocaleTimeString("en-US", {
+                    minute: "2-digit",
+                    hour: "2-digit",
+                  })}
                 </td>
                 <td className="px-2 text-center font-medium">
                   {receipt.items?.filter((item) => item.quantity > 0).length}
@@ -519,38 +587,48 @@ export default function ReceiptPage() {
       </div>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger className="hidden"></DialogTrigger>
-        <DialogContent className="min-w-6xl max-xl:min-w-2xl max-sm:min-w-sm  text-sm">
+        <DialogContent className="max-h-[80vh] min-w-6xl overflow-auto text-sm max-xl:min-w-2xl max-sm:min-w-sm">
           <DialogHeader className="flex">
-            {isAdmin && selectedReceipt?.status !== "Approved" && (
+            {
               <div className="flex items-start justify-between pr-10">
-                <DialogTitle className="text-primary"></DialogTitle>
-                <div>
-                  <AlertDialog>
-                    <AlertDialogTrigger className="cursor-pointer">
-                      <Trash size={20} color="red" />
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Alert!</AlertDialogTitle>
-                        <AlertDialogDescription className="font-medium text-black">
-                          Are you sure you want to remove this Order? This
-                          action is permanent and cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          className="bg-[#FF4C4C] hover:bg-[#FF4C4C]/50"
-                          onClick={onDeleteHandler}
-                        >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
+                <DialogTitle className="text-primary">
+                  {`${new Date(selectedReceipt?.createdAt ?? "").toLocaleDateString()} ${new Date(
+                    selectedReceipt?.createdAt ?? "",
+                  ).toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}`}
+                </DialogTitle>
+                {isAdmin && selectedReceipt?.status !== "Approved" && (
+                  <div>
+                    <AlertDialog>
+                      <AlertDialogTrigger className="cursor-pointer">
+                        <Trash size={20} color="red" />
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Alert!</AlertDialogTitle>
+                          <AlertDialogDescription className="font-medium text-black">
+                            Are you sure you want to remove this Order? This
+                            action is permanent and cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-[#FF4C4C] hover:bg-[#FF4C4C]/50"
+                            onClick={onDeleteHandler}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
               </div>
-            )}
+            }
           </DialogHeader>
           <DialogDescription></DialogDescription>
           <table>
@@ -560,19 +638,29 @@ export default function ReceiptPage() {
                 <th className="py-1 font-medium">Item</th>
                 <th className="font-medium">Unit</th>
                 <th className="font-medium">GST</th>
-                <th className="font-medium">QTY</th>
+                {selectedReceipt?.status === "Requested" ? (
+                  <>
+                    <th className="font-medium">Existing QTY</th>
+                    <th className="font-medium">Updated QTY</th>
+                  </>
+                ) : (
+                  <th className="font-medium">QTY</th>
+                )}
                 <th className="font-medium">Total</th>
               </tr>
             </thead>
             <tbody>
               {selectedReceipt?.items
-                ?.filter((item) => item.quantity !== 0)
+                .filter((item) => item.quantity !== 0)
                 .map((item, i) => (
                   <tr key={i} className="border">
                     <td className="py-1 text-center">{item.Items?.itemId}</td>
                     <td className="py-1 text-center">{item.Items?.name}</td>
                     <td className="text-center">{item.Items?.unit}</td>
                     <td className="text-center">{item.Items?.GST}</td>
+                    {selectedReceipt?.status === "Requested" && (
+                      <td className="text-center">{item.originalQty}</td>
+                    )}
                     {formStatus === "" && (
                       <td className="text-center">{item.quantity}</td>
                     )}
@@ -586,9 +674,10 @@ export default function ReceiptPage() {
                             <Minus className="size-5 text-white" />
                           </button>
                           <input
-                            className="w-10 rounded-md border px-1 text-black"
+                            className="no-spinner w-10 rounded-md border px-1 text-black"
                             value={item.quantity}
-                            type="text"
+                            type="number"
+                            step="any"
                             onChange={(e) =>
                               handleQuantityChange(item.id, e.target.value)
                             }

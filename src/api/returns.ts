@@ -74,3 +74,18 @@ export const getReturnsByFromToDateApi = async (
     console.log(error);
   }
 };
+
+export const getReturnsByPageApi = async (
+  page: number,
+  limit: number,
+  branchId: string,
+) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/api/v1/returns/getReturnsByPage?page=${page}&limit=${limit}&branchId=${branchId}`,
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};

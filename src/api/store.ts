@@ -150,3 +150,17 @@ export const getOpeningClosingStockApi = async (
     console.log(error);
   }
 };
+
+export const getClosingStockForPageApi = async (
+  page: number,
+  limit: number,
+) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/api/v1/store/getClosingStockForPage?page=${page}&limit=${limit}`,
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};

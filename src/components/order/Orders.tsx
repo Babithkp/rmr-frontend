@@ -48,6 +48,7 @@ import { saveAs } from "file-saver";
 import ExcelJS from "exceljs";
 import { getAllItemsApi } from "@/api/item";
 import type { ItemInputs } from "../item/ItemList";
+import { getAllStoresApi } from "@/api/store";
 
 type OrderResponse = {
   id: string;
@@ -80,7 +81,7 @@ type Store = {
 
 export default function Orders() {
   const [isAdmin, setIsAdmin] = useState(false);
-
+  const [allStores, setAllStores] = useState<Store[]>([]);
   const [orders, setOrders] = useState<OrderResponse[]>([]);
   const [fromDate, setFromDate] = useState<Date | undefined>(undefined);
   const [openFromDate, setOpenFromDate] = useState(false);
@@ -116,8 +117,8 @@ export default function Orders() {
     const itemSet = new Set<string>();
     const storeSet = new Set<string>();
 
+    allStores.forEach((store) => storeSet.add(store.storeName));
     orders.forEach((order) => {
-      storeSet.add(order.store.storeName);
       order.Items.forEach((item) => itemSet.add(item.Items.name));
     });
 
@@ -257,6 +258,15 @@ export default function Orders() {
     }
   }
 
+  async function getAllStores() {
+    const response = await getAllStoresApi();
+    if (response?.status === 200) {
+      setAllStores(response.data.data);
+    } else {
+      toast.error("Something went wrong");
+    }
+  }
+
   function getTodaysOrders() {
     const yesterday6PM = new Date();
     yesterday6PM.setDate(yesterday6PM.getDate() - 1);
@@ -273,6 +283,7 @@ export default function Orders() {
 
   useEffect(() => {
     getAllItems();
+    getAllStores();
     const isadmin = localStorage.getItem("isAdmin");
     if (isadmin === "true") {
       setIsAdmin(true);
@@ -292,7 +303,7 @@ export default function Orders() {
       <Navbar />
       <div className="flex w-full flex-col gap-3 rounded-2xl p-2">
         {isAdmin ? (
-          <div className="flex w-full items-center justify-between max-sm:flex-col max-sm:gap-5" >
+          <div className="flex w-full items-center justify-between max-sm:flex-col max-sm:gap-5">
             <Popover open={openFromDate} onOpenChange={setOpenFromDate}>
               <PopoverTrigger asChild>
                 <Button
@@ -300,9 +311,7 @@ export default function Orders() {
                   id="date"
                   className="w-[25%] justify-between font-normal max-xl:w-[30%] max-sm:w-full"
                 >
-                  {fromDate
-                    ? fromDate.toLocaleString() // shows date + time
-                    : "From Date & Time"}
+                  {fromDate ? fromDate.toLocaleString() : "From Date & Time"}
                   <ChevronDownIcon />
                 </Button>
               </PopoverTrigger>
@@ -460,7 +469,10 @@ export default function Orders() {
                   {new Date(order.createdAt).toLocaleDateString()}
                 </td>
                 <td className="border px-2 py-2 text-center font-medium">
-                  {new Date(order.createdAt).toLocaleTimeString()}
+                  {new Date(order.createdAt).toLocaleTimeString("en-US", {
+                    minute: "2-digit",
+                    hour: "2-digit",
+                  })}
                 </td>
                 <td className="border px-2 text-center font-medium">
                   {order.Items?.filter((item) => item.quantity > 0).length}
@@ -479,7 +491,7 @@ export default function Orders() {
       </div>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger className="hidden"></DialogTrigger>
-        <DialogContent className="min-w-6xl max-xl:min-w-2xl max-sm:min-w-sm  text-sm">
+        <DialogContent className="min-w-6xl text-sm max-xl:min-w-2xl max-sm:min-w-sm">
           <DialogHeader className="flex">
             <div className="flex items-start justify-between pr-10">
               <DialogTitle className="text-primary">

@@ -16,11 +16,16 @@ import {
 } from "@/components/ui/dialog";
 
 import { Button } from "../ui/button";
-import { ChevronDownIcon, LoaderCircle } from "lucide-react";
+import {
+  ChevronDownIcon,
+  ChevronLeft,
+  ChevronRight,
+  LoaderCircle,
+} from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
-  getAllClosingStockApi,
   getClosingStockByFromToDateApi,
+  getClosingStockForPageApi,
 } from "@/api/store";
 import { toast } from "react-toastify";
 
@@ -50,6 +55,23 @@ export default function Stocks() {
   const [selectedReturn, setSelectedReturn] = useState<ClosingStock | null>(
     null,
   );
+  const [totalItems, setTotalItems] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const itemsPerPage = 50;
+
+  const startIndex = (currentPage - 1) * itemsPerPage + 1;
+  const endIndex = Math.min(startIndex + itemsPerPage - 1, totalItems);
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  const handlePrev = () => {
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+  };
+
+  const handleNext = () => {
+    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+  };
 
   const onFilterHandler = async () => {
     if (fromDate && toDate) {
@@ -65,13 +87,19 @@ export default function Stocks() {
   };
 
   async function getClosingStock() {
-    const response = await getAllClosingStockApi();
+    const response = await getClosingStockForPageApi(currentPage, itemsPerPage);
     if (response?.status === 200) {
-      setCloasingStock(response.data.data);
+      setCloasingStock(response.data.data.items);
+      setTotalItems(response.data.data.count);
     } else {
       toast.error("Something went wrong");
     }
   }
+
+  useEffect(() => {
+    getClosingStock();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startIndex, endIndex]);
 
   useEffect(() => {
     getClosingStock();
@@ -86,7 +114,7 @@ export default function Stocks() {
             <Button
               variant="outline"
               id="date"
-              className="w-[35%] justify-between font-normal max-sm:w-full"
+              className="w-[30%] justify-between font-normal max-sm:w-full"
             >
               {fromDate
                 ? fromDate.toLocaleString() // shows date + time
@@ -140,7 +168,7 @@ export default function Stocks() {
             <Button
               variant="outline"
               id="date"
-              className="w-[35%] justify-between font-normal max-sm:w-full"
+              className="w-[30%] justify-between font-normal max-sm:w-full"
             >
               {toDate ? toDate.toLocaleString() : "To Date & Time"}
               <ChevronDownIcon />
@@ -199,6 +227,29 @@ export default function Stocks() {
             "Filter"
           )}
         </Button>
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <p>
+            {startIndex}-{endIndex}
+          </p>
+          <p>of</p>
+          <p>{totalItems}</p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePrev}
+              disabled={currentPage === 1}
+              className={`cursor-pointer ${currentPage === 1 ? "opacity-50" : ""}`}
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              className={`cursor-pointer ${currentPage === totalPages ? "opacity-50" : ""}`}
+              onClick={handleNext}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        </div>
       </div>
       <div className="w-full">
         <div className="rounded-md border">
@@ -228,7 +279,7 @@ export default function Stocks() {
                     {new Date(item.createdAt).toLocaleTimeString()}
                   </td>
                   <td className="p-2 text-center font-medium">
-                  {item.Items.filter((item) => item.quantity > 0).length}
+                    {item.Items.filter((item) => item.quantity > 0).length}
                   </td>
                 </tr>
               ))}
@@ -238,7 +289,7 @@ export default function Stocks() {
       </div>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger className="hidden"></DialogTrigger>
-        <DialogContent className="min-w-6xl max-xl:min-w-2xl max-sm:min-w-sm  text-sm">
+        <DialogContent className="min-w-6xl text-sm max-xl:min-w-2xl max-sm:min-w-sm">
           <DialogHeader className="flex">
             <DialogTitle className="text-primary"></DialogTitle>
           </DialogHeader>
@@ -252,13 +303,12 @@ export default function Stocks() {
               </tr>
             </thead>
             <tbody>
-              {selectedReturn?.Items.map((items,i) => (
+              {selectedReturn?.Items.map((items, i) => (
                 <tr key={i} className="border">
                   <td className="py-1 text-center">{items.Items.name}</td>
                   <td className="py-1 text-center">{items.Items.unit}</td>
                   <td className="py-1 text-center">{items.quantity}</td>
-                  <td className="py-1 text-center">
-                  </td>
+                  <td className="py-1 text-center"></td>
                 </tr>
               ))}
             </tbody>

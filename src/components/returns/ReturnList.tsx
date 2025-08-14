@@ -1,8 +1,7 @@
 import {
   approveReturnApi,
   declineReturnApi,
-  getAllReturnsApi,
-  getReturnsByStoreIdApi,
+  getReturnsByPageApi,
 } from "@/api/returns";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -15,7 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "../ui/button";
-import { LoaderCircle, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, LoaderCircle, Plus } from "lucide-react";
 
 interface ReturnInputs {
   id: string;
@@ -46,12 +45,30 @@ export default function ReturnList({
   setSection: (section: { returnsList: boolean; returnForm: boolean }) => void;
 }) {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [storeId, setStoreId] = useState("");
   const [returns, setReturns] = useState<ReturnInputs[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedReturn, setSelectedReturn] = useState<ReturnInputs | null>(
     null,
   );
   const [loading, setLoading] = useState(false);
+  const [totalItems, setTotalItems] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const itemsPerPage = 50;
+
+  const startIndex = (currentPage - 1) * itemsPerPage + 1;
+  const endIndex = Math.min(startIndex + itemsPerPage - 1, totalItems);
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  const handlePrev = () => {
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+  };
+
+  const handleNext = () => {
+    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+  };
 
   const onDeclineHandler = async () => {
     setLoading(true);
@@ -85,30 +102,32 @@ export default function ReturnList({
     setLoading(false);
   };
 
-  async function getStoreReturns(storeId: string) {
-    const response = await getReturnsByStoreIdApi(storeId);
+  async function getAllReturns(store?: string) {
+    const response = await getReturnsByPageApi(
+      currentPage,
+      itemsPerPage,
+      store ? store : storeId,
+    );
     if (response?.status === 200) {
-      setReturns(response.data.data);
-    } else {
-      toast.error("Something went wrong");
-    }
-  }
-
-  async function getAllReturns() {
-    const response = await getAllReturnsApi();
-    if (response?.status === 200) {
-      setReturns(response.data.data);
+      setReturns(response.data.data.returns);
+      setTotalItems(response.data.data.count);
     } else {
       toast.error("Something went wrong");
     }
   }
 
   useEffect(() => {
+    getAllReturns();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startIndex, endIndex]);
+
+  useEffect(() => {
     const isAdmin = localStorage.getItem("isAdmin");
     if (isAdmin !== "true") {
       const store = localStorage.getItem("store");
       if (store) {
-        getStoreReturns(JSON.parse(store).id);
+        getAllReturns(JSON.parse(store).id);
+        setStoreId(JSON.parse(store).id);
       }
     } else {
       setIsAdmin(true);
@@ -145,8 +164,33 @@ export default function ReturnList({
           )}
         </section>
       )}
-
+      <section className="flex justify-end">
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <p>
+            {startIndex}-{endIndex}
+          </p>
+          <p>of</p>
+          <p>{totalItems}</p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePrev}
+              disabled={currentPage === 1}
+              className={`cursor-pointer ${currentPage === 1 ? "opacity-50" : ""}`}
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              className={`cursor-pointer ${currentPage === totalPages ? "opacity-50" : ""}`}
+              onClick={handleNext}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        </div>
+      </section>
       <section className="rounded-lg border">
+        <div></div>
         <table className="w-full">
           <thead>
             <tr>
@@ -172,7 +216,10 @@ export default function ReturnList({
                   {new Date(returnItem.createdAt).toLocaleDateString()}
                 </td>
                 <td className="text-center">
-                  {new Date(returnItem.createdAt).toLocaleTimeString()}
+                  {new Date(returnItem.createdAt).toLocaleTimeString("en-US", {
+                    minute: "2-digit",
+                    hour: "2-digit",
+                  })}
                 </td>
                 <td className="text-center">{returnItem.Items.length}</td>
                 <td className="text-center">
@@ -188,7 +235,7 @@ export default function ReturnList({
         </table>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger className="hidden"></DialogTrigger>
-          <DialogContent className="min-w-6xl max-xl:min-w-2xl max-sm:min-w-sm  text-sm">
+          <DialogContent className="min-w-6xl text-sm max-xl:min-w-2xl max-sm:min-w-sm">
             <DialogHeader className="flex">
               <DialogTitle className="text-primary"></DialogTitle>
             </DialogHeader>

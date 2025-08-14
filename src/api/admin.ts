@@ -1,6 +1,6 @@
 import axios from "axios";
-// const BASE_URL = "http://localhost:3000";
-const BASE_URL = "https://rmr-backend.vercel.app";
+const BASE_URL = "http://localhost:3000";
+// const BASE_URL = "https://rmr-backend.vercel.app";
 
 export const adminLoginApi = async (username: string, password: string) => {
   try {
