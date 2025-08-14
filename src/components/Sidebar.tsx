@@ -12,6 +12,7 @@ import {
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 
+
 export default function Sidebar() {
   const location = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -24,7 +25,7 @@ export default function Sidebar() {
   }, []);
 
   return (
-    <nav className="bg-primary flex flex-col items-center gap-20 py-10 text-[10px] text-white h-screen overflow-y-auto">
+    <nav className="bg-primary flex flex-col items-center gap-20 py-10 text-[10px] text-white h-screen overflow-y-auto max-sm:hidden">
       <LogoWhite />
       <div className="flex flex-col gap-5">
         <a

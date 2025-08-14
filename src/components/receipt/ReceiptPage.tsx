@@ -405,7 +405,7 @@ export default function ReceiptPage() {
                 <Plus size={20} />
                 Create new
               </DialogTrigger>
-              <DialogContent className="min-w-5xl overflow-x-auto max-xl:min-w-2xl">
+              <DialogContent className="min-w-5xl overflow-x-auto max-xl:min-w-2xl max-sm:min-w-sm max-sm:p-3">
                 <DialogHeader>
                   <DialogTitle>Create Receipt</DialogTitle>
                 </DialogHeader>
@@ -519,7 +519,7 @@ export default function ReceiptPage() {
       </div>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger className="hidden"></DialogTrigger>
-        <DialogContent className="min-w-6xl max-xl:min-w-2xl">
+        <DialogContent className="min-w-6xl max-xl:min-w-2xl max-sm:min-w-sm max-sm:p-3 text-sm">
           <DialogHeader className="flex">
             {isAdmin && selectedReceipt?.status !== "Approved" && (
               <div className="flex items-start justify-between pr-10">

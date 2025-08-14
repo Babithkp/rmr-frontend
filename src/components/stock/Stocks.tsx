@@ -78,15 +78,15 @@ export default function Stocks() {
   }, []);
 
   return (
-    <main className="flex w-full flex-col items-center gap-5 px-20 max-xl:px-5">
+    <main className="flex w-full flex-col items-center gap-5 px-20 max-xl:px-5 max-sm:px-2 max-sm:text-[10px]">
       <Navbar />
-      <div className="flex w-full justify-between gap-5 rounded-full py-2 font-medium">
+      <div className="flex w-full justify-between gap-5 rounded-full py-2 font-medium max-sm:flex-col max-sm:gap-5">
         <Popover open={openFromDate} onOpenChange={setOpenFromDate}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               id="date"
-              className="w-[35%] justify-between font-normal"
+              className="w-[35%] justify-between font-normal max-sm:w-full"
             >
               {fromDate
                 ? fromDate.toLocaleString() // shows date + time
@@ -140,7 +140,7 @@ export default function Stocks() {
             <Button
               variant="outline"
               id="date"
-              className="w-[35%] justify-between font-normal"
+              className="w-[35%] justify-between font-normal max-sm:w-full"
             >
               {toDate ? toDate.toLocaleString() : "To Date & Time"}
               <ChevronDownIcon />
@@ -189,7 +189,7 @@ export default function Stocks() {
         </Popover>
 
         <Button
-          className="w-[20%] cursor-pointer text-white"
+          className="w-[20%] cursor-pointer text-white max-sm:w-full"
           onClick={onFilterHandler}
           disabled={isLoading}
         >
@@ -238,7 +238,7 @@ export default function Stocks() {
       </div>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger className="hidden"></DialogTrigger>
-        <DialogContent className="min-w-6xl max-xl:min-w-2xl">
+        <DialogContent className="min-w-6xl max-xl:min-w-2xl max-sm:min-w-sm max-sm:p-3 text-sm">
           <DialogHeader className="flex">
             <DialogTitle className="text-primary"></DialogTitle>
           </DialogHeader>

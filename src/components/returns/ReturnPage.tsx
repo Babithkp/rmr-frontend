@@ -11,7 +11,7 @@ export default function ReturnPage() {
   });
 
   return (
-    <main className="flex w-full flex-col gap-5 px-20 max-xl:px-5">
+    <main className="flex w-full flex-col gap-5 px-20 max-xl:px-5 max-sm:px-2 max-sm:text-[10px]">
       <Navbar />
 
       {section.returnsList && (

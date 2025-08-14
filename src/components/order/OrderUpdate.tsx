@@ -113,6 +113,7 @@ export default function OrderUpdate() {
           new Set(orders.Items.map((item) => item.Items.category)),
         );
         setCategories(uniqueCategories);
+        setVisibleCategories(uniqueCategories[0] as never);
 
         const items: OrderItemUpdate[] = orders.Items.map((orderItem) => {
           const item = orderItem.Items as ItemInputs;
@@ -144,10 +145,10 @@ export default function OrderUpdate() {
   }, []);
 
   return (
-    <main className="flex w-full flex-col gap-5 px-20 max-xl:px-5 max-xl:text-[10px]">
+    <main className="flex w-full flex-col gap-5 px-20 max-xl:px-5 max-xl:text-[10px] max-sm:px-2 ">
       <Navbar />
-      <section className="flex gap-5">
-        <div className="flex h-fit w-[30%] flex-col gap-2 rounded-lg border p-2">
+      <section className="flex gap-5 max-sm:flex-col max-sm:gap-5">
+        <div className="flex h-fit w-[30%] flex-col gap-2 rounded-lg border p-2 max-sm:w-full text-sm">
           <p className="text-lg font-medium">Categories</p>
           <div className="flex flex-col gap-2">
             {categories.map((category, i) => (
@@ -161,7 +162,7 @@ export default function OrderUpdate() {
             ))}
           </div>
         </div>
-        <div className="w-[70%] overflow-y-auto rounded-lg border">
+        <div className="w-[70%] overflow-y-auto rounded-lg border max-sm:w-full max-sm:h-[70vh]">
           <table className="w-full">
             <thead>
               <tr className="text-[#797979]">
@@ -214,7 +215,7 @@ export default function OrderUpdate() {
             </tbody>
           </table>
         </div>
-        <div className="flex h-[85vh] w-[30%] flex-col justify-between overflow-y-auto rounded-lg border p-2">
+        <div className="flex h-[85vh] w-[30%] flex-col justify-between overflow-y-auto rounded-lg border p-2 max-sm:w-full">
           <div className="flex w-full flex-col gap-2">
             <p className="font-bold">Item Total</p>
             <table>

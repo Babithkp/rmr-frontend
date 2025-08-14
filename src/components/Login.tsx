@@ -45,7 +45,7 @@ export default function Login() {
     <main className="bg-primary-foreground flex h-screen w-full flex-col items-center justify-between">
       <section className="grid h-full place-content-center">
         <form
-          className="flex w-[25rem] flex-col items-center gap-10 rounded-lg bg-white p-5"
+          className="flex w-[25rem] flex-col items-center gap-10 rounded-lg bg-white p-5 max-sm:w-[22rem]"
           onSubmit={onFormSubmit}
         >
           <div className="flex items-center gap-2">
@@ -86,7 +86,7 @@ export default function Login() {
           </Button>
         </form>
       </section>
-      <footer className="bg-primary flex h-[4rem] w-full flex-col items-end justify-center px-10 text-white">
+      <footer className="bg-primary flex h-[4rem] w-full flex-col items-end justify-center px-10 text-white max-sm:px-0">
         <div className="flex items-center gap-2 font-medium">
           <p className="text-lg text-black">Made by</p>
           <a href="https://www.trikonatech.com" target="_blank">

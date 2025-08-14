@@ -261,7 +261,7 @@ export default function BomList({
             Create BOM
             <Plus size={18} />
           </DialogTrigger>
-          <DialogContent className="min-w-5xl">
+          <DialogContent className="min-w-5xl max-sm:min-w-sm max-sm:p-3 max-h-[80vh] overflow-auto">
             <DialogHeader>
               <DialogTitle className="text-primary">
                 {formStatus == "New" ? "Create BOM" : "Edit BOM"}
@@ -270,7 +270,7 @@ export default function BomList({
             <DialogDescription></DialogDescription>
             <div className="flex flex-wrap items-end justify-between gap-5">
               <button
-                className="border-primary grid h-40 w-[25%] gap-2 rounded-lg border border-dashed text-xs text-slate-500"
+                className="border-primary grid h-40 w-[25%] gap-2 rounded-lg border border-dashed text-xs text-slate-500 max-sm:w-full"
                 onClick={() => imageRef.current?.click()}
                 type="button"
               >
@@ -299,7 +299,7 @@ export default function BomList({
                   />
                 )}
               </button>
-              <div className="flex w-[70%] flex-col gap-2">
+              <div className="flex w-[70%] flex-col gap-2 max-sm:w-full">
                 <label>BOM Name</label>
                 <input
                   type="text"
@@ -475,7 +475,7 @@ export default function BomList({
         onOpenChange={setIsBomDetailsModalOpen}
       >
         <DialogTrigger className="hidden"></DialogTrigger>
-        <DialogContent className="min-w-6xl max-xl:min-w-2xl">
+        <DialogContent className="min-w-6xl max-xl:min-w-2xl max-sm:min-w-sm max-sm:p-3 text-sm">
           <DialogHeader className="flex">
             <div className="flex items-start justify-between pr-10">
               <DialogTitle className="text-primary">

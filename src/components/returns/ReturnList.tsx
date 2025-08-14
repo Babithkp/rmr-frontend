@@ -188,7 +188,7 @@ export default function ReturnList({
         </table>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger className="hidden"></DialogTrigger>
-          <DialogContent className="min-w-6xl max-xl:min-w-2xl">
+          <DialogContent className="min-w-6xl max-xl:min-w-2xl max-sm:min-w-sm max-sm:p-3 text-sm">
             <DialogHeader className="flex">
               <DialogTitle className="text-primary"></DialogTitle>
             </DialogHeader>
