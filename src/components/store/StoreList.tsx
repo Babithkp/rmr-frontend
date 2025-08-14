@@ -228,7 +228,7 @@ export default function StoreList() {
   return (
     <section className="w-full">
       <div className="flex w-full gap-5">
-        <div className="flex w-[90%] items-center gap-2 rounded-md border px-2">
+        <div className="flex w-[90%] items-center gap-2 rounded-md border px-2 max-sm:w-[70%]">
           <Search className="text-slate-600" size={20} />
           <input
             type="text"
