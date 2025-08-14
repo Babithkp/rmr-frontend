@@ -238,7 +238,7 @@ export default function Stocks() {
       </div>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger className="hidden"></DialogTrigger>
-        <DialogContent className="min-w-6xl max-xl:min-w-2xl max-sm:min-w-sm max-sm:p-3 text-sm">
+        <DialogContent className="min-w-6xl max-xl:min-w-2xl max-sm:min-w-sm  text-sm">
           <DialogHeader className="flex">
             <DialogTitle className="text-primary"></DialogTitle>
           </DialogHeader>

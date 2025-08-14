@@ -261,7 +261,7 @@ export default function BomList({
             Create BOM
             <Plus size={18} />
           </DialogTrigger>
-          <DialogContent className="min-w-5xl max-sm:min-w-sm max-sm:p-3 max-h-[80vh] overflow-auto">
+          <DialogContent className="min-w-5xl max-sm:min-w-sm  max-h-[80vh] overflow-auto">
             <DialogHeader>
               <DialogTitle className="text-primary">
                 {formStatus == "New" ? "Create BOM" : "Edit BOM"}
@@ -475,7 +475,7 @@ export default function BomList({
         onOpenChange={setIsBomDetailsModalOpen}
       >
         <DialogTrigger className="hidden"></DialogTrigger>
-        <DialogContent className="min-w-6xl max-xl:min-w-2xl max-sm:min-w-sm max-sm:p-3 text-sm">
+        <DialogContent className="min-w-6xl max-xl:min-w-2xl max-sm:min-w-sm text-sm">
           <DialogHeader className="flex">
             <div className="flex items-start justify-between pr-10">
               <DialogTitle className="text-primary">

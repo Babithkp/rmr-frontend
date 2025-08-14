@@ -476,7 +476,7 @@ export default function StoreList() {
         onOpenChange={setIsStoreDetailsModalOpen}
       >
         <DialogTrigger className="hidden"></DialogTrigger>
-        <DialogContent className="min-w-6xl max-xl:min-w-2xl max-sm:min-w-sm max-sm:p-3">
+        <DialogContent className="min-w-6xl max-xl:min-w-2xl max-sm:min-w-sm ">
           <DialogHeader className="flex">
             <div className="flex items-start justify-between pr-10">
               <DialogTitle className="text-primary">
