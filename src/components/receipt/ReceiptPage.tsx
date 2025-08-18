@@ -389,6 +389,8 @@ export default function ReceiptPage() {
     if (response?.status === 200) {
       setReceipts(response.data.data.receipts);
       setTotalItems(response.data.data.count);
+      console.log(response.data.data.receipts);
+      
     } else {
       toast.error("Something went wrong");
     }
@@ -396,8 +398,12 @@ export default function ReceiptPage() {
   }
 
   useEffect(() => {
-    getAllReceipts();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (isAdmin) {
+      getAllReceipts();      
+    } else if(storeId) {
+      getAllReceipts(storeId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startIndex, endIndex]);
 
   useEffect(() => {
@@ -406,7 +412,9 @@ export default function ReceiptPage() {
     if (admin === "true") {
       setIsAdmin(true);
       getAllReceipts();
+      console.log("admin");
     } else {
+      console.log("store");
       const store = localStorage.getItem("store");
       if (store) {
         getAllReceipts(JSON.parse(store).id);
@@ -421,7 +429,7 @@ export default function ReceiptPage() {
         <div className="flex items-center justify-between">
           <p className="text-lg font-medium">Reciepts</p>
           <div className="flex gap-5">
-            <Button onClick={() => getAllReceipts()}>
+            <Button onClick={() => getAllReceipts(storeId)}>
               <RefreshCcw
                 size={30}
                 className={`${loading ? "animate-spin" : ""}`}
